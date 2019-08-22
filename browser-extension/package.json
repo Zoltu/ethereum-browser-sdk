@@ -1,0 +1,20 @@
+{
+	"description": "N/A",
+	"repository": {},
+	"license": "Unlicense",
+	"dependencies": {
+		"@zoltu/ethereum-browser-sdk": "file:../ethereum-browser-sdk/library",
+		"@zoltu/ethereum-types": "3.0.0",
+		"webextension-polyfill": "0.4.0"
+	},
+	"devDependencies": {
+		"@types/firefox-webext-browser": "67.0.2",
+		"recursive-fs": "1.1.2"
+	},
+	"scripts": {
+		"clean": "recursive-delete \"output\"",
+		"watch": "cd build && npx ts-node watch.ts",
+		"build": "cd build && npx ts-node build.ts",
+		"prepare": "cd build && npm install"
+	}
+}

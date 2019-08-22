@@ -1,0 +1,16 @@
+{
+	"description": "N/A",
+	"repository": {},
+	"license": "Unlicense",
+	"dependencies": {
+		"@types/node": "12.7.2",
+		"@types/rollup-plugin-sourcemaps": "0.4.2",
+		"@zoltu/file-copier": "2.2.0",
+		"@zoltu/typescript-transformer-append-js-extension": "1.0.1",
+		"rollup": "1.20.0",
+		"rollup-plugin-node-resolve": "5.2.0",
+		"rollup-plugin-sourcemaps": "0.4.2",
+		"ts-node": "8.3.0",
+		"typescript": "3.5.3"
+	}
+}

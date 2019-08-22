@@ -1,0 +1,81 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "browser-extension - watch",
+			"cwd": "${workspaceFolder}/browser-extension/build",
+			"runtimeArgs": [ "-r", "ts-node/register", ],
+			"args": [ "${workspaceFolder}/browser-extension/build/watch.ts", ],
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "browser-extension - build",
+			"cwd": "${workspaceFolder}/browser-extension/build",
+			"runtimeArgs": [ "-r", "ts-node/register", ],
+			"args": [ "${workspaceFolder}/browser-extension/build/build.ts", ],
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "contracts - compile",
+			"cwd": "${workspaceFolder}/contracts/",
+			"runtimeArgs": [ "-r", "ts-node/register", ],
+			"args": [ "${workspaceFolder}/contracts/scripts/compile.ts", ],
+			"env": {
+				"TS_NODE_PROJECT": "${workspaceFolder}/contracts/scripts/tsconfig.json",
+			}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "toolbox - sandbox",
+			"cwd": "${workspaceFolder}/toolbox/",
+			"runtimeArgs": [ "-r", "ts-node/register", ],
+			"args": [ "${workspaceFolder}/toolbox/source/sandbox.ts", ],
+			"env": {
+				"TS_NODE_PROJECT": "${workspaceFolder}/toolbox/tsconfig.json",
+			}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "sample-site - build",
+			"cwd": "${workspaceFolder}/sample-site/build",
+			"runtimeArgs": [ "-r", "ts-node/register", ],
+			"args": [ "${workspaceFolder}/sample-site/build/build.ts", ],
+			"env": {
+				"TS_NODE_PROJECT": "${workspaceFolder}/sample-site/build/tsconfig.json",
+			}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "sample-site - watch",
+			"cwd": "${workspaceFolder}/sample-site/build",
+			"runtimeArgs": [ "-r", "ts-node/register", ],
+			"args": [ "${workspaceFolder}/sample-site/build/watch.ts", ],
+			"env": {
+				"TS_NODE_PROJECT": "${workspaceFolder}/sample-site/build/tsconfig.json",
+			}
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "sdk - test",
+			"cwd": "${workspaceFolder}/ethereum-browser-sdk/tests",
+			"runtimeArgs": [ "-r", "ts-node/register", ],
+			"args": [ "${workspaceFolder}/ethereum-browser-sdk/tests/source/index.ts", ],
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "sample-dapp - serve",
+			"cwd": "${workspaceFolder}/sample-dapp/build",
+			"runtimeArgs": [ "-r", "ts-node/register", ],
+			"args": [ "${workspaceFolder}/sample-dapp/build/serve.ts", ],
+		}
+	]
+}

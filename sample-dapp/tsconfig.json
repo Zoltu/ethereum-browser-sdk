@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		"target": "esnext",
+		"module": "es2015",
+		"moduleResolution": "node",
+		"outDir": "output",
+		"rootDir": "source",
+		"sourceMap": true,
+		"inlineSources": true,
+		"strict": true,
+		"noEmitOnError": true,
+		"noImplicitAny": true,
+		"noImplicitThis": true,
+		"noImplicitReturns": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"lib": [ "dom", "es2018" ],
+		"allowUmdGlobalAccess": true,
+	},
+	"include": [
+		"source/**/*.ts",
+	]
+}

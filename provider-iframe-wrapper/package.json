@@ -1,0 +1,23 @@
+{
+	"description": "N/A",
+	"repository": {},
+	"license": "Unlicense",
+	"dependencies": {
+		"@zoltu/ethereum-browser-sdk": "file:../ethereum-browser-sdk/library",
+		"@zoltu/ethereum-fetch-json-rpc": "2.0.0",
+		"@zoltu/ethereum-types": "3.0.0",
+		"@zoltu/recoverable-wallet-library": "file:../contracts",
+		"es-module-shims": "0.2.15",
+		"knockout": "3.5.0"
+	},
+	"devDependencies": {
+		"recursive-fs": "1.1.2"
+	},
+	"scripts": {
+		"clean": "recursive-delete \"output\"",
+		"watch": "cd build && npx ts-node watch.ts",
+		"build": "cd build && npx ts-node build.ts",
+		"serve": "cd build && npx ts-node serve.ts",
+		"prepare": "cd build && npm install"
+	}
+}
