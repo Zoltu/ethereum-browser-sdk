@@ -20,45 +20,23 @@
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "contracts - compile",
-			"cwd": "${workspaceFolder}/contracts/",
+			"name": "sample-dapp - build",
+			"cwd": "${workspaceFolder}/sample-dapp/build",
 			"runtimeArgs": [ "-r", "ts-node/register", ],
-			"args": [ "${workspaceFolder}/contracts/scripts/compile.ts", ],
+			"args": [ "${workspaceFolder}/sample-dapp/build/build.ts", ],
 			"env": {
-				"TS_NODE_PROJECT": "${workspaceFolder}/contracts/scripts/tsconfig.json",
+				"TS_NODE_PROJECT": "${workspaceFolder}/sample-dapp/build/tsconfig.json",
 			}
 		},
 		{
 			"type": "node",
 			"request": "launch",
-			"name": "toolbox - sandbox",
-			"cwd": "${workspaceFolder}/toolbox/",
+			"name": "sample-dapp - watch",
+			"cwd": "${workspaceFolder}/sample-dapp/build",
 			"runtimeArgs": [ "-r", "ts-node/register", ],
-			"args": [ "${workspaceFolder}/toolbox/source/sandbox.ts", ],
+			"args": [ "${workspaceFolder}/sample-dapp/build/watch.ts", ],
 			"env": {
-				"TS_NODE_PROJECT": "${workspaceFolder}/toolbox/tsconfig.json",
-			}
-		},
-		{
-			"type": "node",
-			"request": "launch",
-			"name": "sample-site - build",
-			"cwd": "${workspaceFolder}/sample-site/build",
-			"runtimeArgs": [ "-r", "ts-node/register", ],
-			"args": [ "${workspaceFolder}/sample-site/build/build.ts", ],
-			"env": {
-				"TS_NODE_PROJECT": "${workspaceFolder}/sample-site/build/tsconfig.json",
-			}
-		},
-		{
-			"type": "node",
-			"request": "launch",
-			"name": "sample-site - watch",
-			"cwd": "${workspaceFolder}/sample-site/build",
-			"runtimeArgs": [ "-r", "ts-node/register", ],
-			"args": [ "${workspaceFolder}/sample-site/build/watch.ts", ],
-			"env": {
-				"TS_NODE_PROJECT": "${workspaceFolder}/sample-site/build/tsconfig.json",
+				"TS_NODE_PROJECT": "${workspaceFolder}/sample-dapp/build/tsconfig.json",
 			}
 		},
 		{
@@ -76,6 +54,6 @@
 			"cwd": "${workspaceFolder}/sample-dapp/build",
 			"runtimeArgs": [ "-r", "ts-node/register", ],
 			"args": [ "${workspaceFolder}/sample-dapp/build/serve.ts", ],
-		}
+		},
 	]
 }

@@ -11,7 +11,7 @@
 		"typescript": "3.5.3"
 	},
 	"scripts": {
-		"build": "cd ../library && npm run build && cd ../tests && npm install",
+		"build": "cd ../library && npm run build && cd ../tests",
 		"test": "ts-node source/index.ts"
 	}
 }

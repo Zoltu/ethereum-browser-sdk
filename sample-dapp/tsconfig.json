@@ -3,8 +3,9 @@
 		"target": "esnext",
 		"module": "es2015",
 		"moduleResolution": "node",
-		"outDir": "output",
-		"rootDir": "source",
+		"jsx": "react",
+		"outDir": "app/js",
+		"rootDir": "app/ts",
 		"sourceMap": true,
 		"inlineSources": true,
 		"strict": true,
@@ -14,10 +15,11 @@
 		"noImplicitReturns": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"lib": [ "dom", "es2018" ],
 		"allowUmdGlobalAccess": true,
+		"lib": [ "dom", "es2018", "esnext.bigint" ],
 	},
 	"include": [
-		"source/**/*.ts",
+		"app/ts/**/*.ts",
+		"app/ts/**/*.tsx",
 	]
 }

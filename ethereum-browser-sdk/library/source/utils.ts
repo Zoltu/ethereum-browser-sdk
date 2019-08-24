@@ -15,3 +15,11 @@ export function uuidv4() {
 	}
 	return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, base10DigitToRandomBase16Digit)
 }
+
+export function setsAreEqual<T extends ReadonlySet<any>>(left: T, right: T): boolean {
+	if (left.size !== right.size) return false
+	for (const item of left) {
+		if (!right.has(item)) return false
+	}
+	return true
+}

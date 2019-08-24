@@ -4,12 +4,13 @@ import * as net from 'net'
 import { promises as filesystem } from 'fs'
 import * as path from 'path'
 import { getFileType } from './filesystem-extensions'
+import { appDirectoryPath } from './paths'
 
 // maps file extention to MIME types
 const mimeType = {
 	'.ico': 'image/x-icon',
 	'.html': 'text/html',
-	'.js': 'text/javascript',
+	'.js': 'application/javascript',
 	'.json': 'application/json',
 	'.css': 'text/css',
 	'.png': 'image/png',
@@ -37,8 +38,8 @@ async function listener(request: http.IncomingMessage, response: http.ServerResp
 		// Avoid https://en.wikipedia.org/wiki/Directory_traversal_attack
 		// e.g curl --path-as-is http://localhost:9000/../fileInDanger.txt
 		// by limiting the path to current directory only
-		const sanitizePath = path.normalize(parsedUrl.pathname).replace(/^(\.\.[\/\\])+/, '')
-		let pathname = path.join(__dirname, '..', 'output', sanitizePath)
+		const sanitizedPath = path.normalize(parsedUrl.pathname).replace(/^(\.\.[\/\\])+/, '')
+		let pathname = path.join(appDirectoryPath, sanitizedPath)
 
 		// if is a directory, then look for index.html
 		let filetype = await getFileType(pathname)

@@ -1,18 +1,28 @@
-import { MessageEnvelope, Message, ClientMessage, EthereumEnvelope, ProviderMessage, Handshake, HotOstrich } from "./shared";
-import { EthereumMessageEvent } from "./client";
-import { assertNever } from "./utils";
+import { MessageEnvelope, Message, ClientMessage, EthereumEnvelope, ProviderMessage, Handshake, HotOstrich } from "./shared"
+import { EthereumMessageEvent } from "./client"
+import { assertNever } from "./utils"
+
+interface IncomingWindowLike {
+	addEventListener(type: 'message', listener: (message: any) => void): void
+	removeEventListener(type: 'message', listener: (message: any) => void): void
+}
+
+interface OutgoingWindowLike {
+	postMessage(message: any, targetOrigin: string): void
+}
 
 abstract class Channel<T extends MessageEnvelope> {
-	protected constructor(private readonly window: Window, private readonly clientWindow: Window) {
-		this.window.addEventListener('message', this.onMessage)
+	protected constructor(private readonly incomingWindow: IncomingWindowLike, private readonly outgoingWindow: OutgoingWindowLike) {
+		this.incomingWindow.addEventListener('message', this.onMessage)
 	}
 
 	public readonly shutdown = () => {
-		this.window.removeEventListener('message', this.onMessage)
+		this.incomingWindow.removeEventListener('message', this.onMessage)
 	}
 
-	private readonly onMessage = async (messageEvent: MessageEvent) => {
+	private readonly onMessage = async (messageEvent: any) => {
 		try {
+			if (!isMessageEvent(messageEvent)) return
 			if (!isEthereumMessageEvent(messageEvent)) return
 			if (messageEvent.data.ethereum.channel !== this.clientChannelName) return
 			// CONSIDER: error here instead of silently returning if we see messages over this channel that we don't expect
@@ -39,7 +49,7 @@ abstract class Channel<T extends MessageEnvelope> {
 				message: message,
 			} as MessageEnvelope // https://github.com/microsoft/TypeScript/issues/32591
 		}
-		this.clientWindow.postMessage(ethereumEnvelope, '*')
+		this.outgoingWindow.postMessage(ethereumEnvelope, '*')
 	}
 
 	private readonly isT = (messageEnvelope: MessageEnvelope): messageEnvelope is T => messageEnvelope.kind === this.kind
@@ -57,8 +67,8 @@ export interface HandshakeHandler {
 }
 
 export class HandshakeChannel extends Channel<Handshake.Envelope> {
-	public constructor(window: Window, clientWindow: Window, private readonly handshakeHandler: HandshakeHandler) {
-		super(window, clientWindow)
+	public constructor(incomingWindow: IncomingWindowLike, outgoingWindow: OutgoingWindowLike, private readonly handshakeHandler: HandshakeHandler) {
+		super(incomingWindow, outgoingWindow)
 		this.announceProvider()
 	}
 
@@ -93,20 +103,65 @@ export class HandshakeChannel extends Channel<Handshake.Envelope> {
 
 export interface HotOstrichHandler {
 	readonly onError: (error: Error) => void
-	readonly getCapabilities: () => Promise<Array<'sign'|'call'|'submit'|'log_subscription'|'log_history'>>
-	readonly getSignerAddress: () => Promise<Uint8Array>
-	readonly localContractCall: (request: HotOstrich.LocalContractCall.Request['payload']) => Promise<Uint8Array>
-	readonly signMessage: (message: string) => Promise<HotOstrich.SignMessage.SuccessResponse['payload']>
-	readonly submitContractCall: (message: HotOstrich.SubmitContractCall.Request['payload']) => Promise<HotOstrich.SubmitContractCall.SuccessResponse['payload']>
-	readonly submitContractDeployment: (requestPayload: HotOstrich.SubmitContractDeployment.Request['payload']) => Promise<HotOstrich.SubmitContractDeployment.SuccessResponse['payload']>
-	readonly submitNativeTokenTransfer: (requestPayload: HotOstrich.SubmitNativeTokenTransfer.Request['payload']) => Promise<HotOstrich.SubmitNativeTokenTransfer.SuccessResponse['payload']>
+	readonly getBalance: (request: HotOstrich.GetBalance.Request['payload']['address']) => Promise<HotOstrich.GetBalance.SuccessResponse['payload']['balance']>
+	readonly localContractCall: (request: HotOstrich.LocalContractCall.Request['payload']) => Promise<HotOstrich.LocalContractCall.SuccessResponse['payload']['result']>
+	readonly signMessage: (message: HotOstrich.SignMessage.Request['payload']['message']) => Promise<HotOstrich.SignMessage.SuccessResponse['payload']>
+	readonly submitContractCall: (request: HotOstrich.SubmitContractCall.Request['payload']) => Promise<HotOstrich.SubmitContractCall.SuccessResponse['payload']>
+	readonly submitContractDeployment: (request: HotOstrich.SubmitContractDeployment.Request['payload']) => Promise<HotOstrich.SubmitContractDeployment.SuccessResponse['payload']>
+	readonly submitNativeTokenTransfer: (request: HotOstrich.SubmitNativeTokenTransfer.Request['payload']) => Promise<HotOstrich.SubmitNativeTokenTransfer.SuccessResponse['payload']>
 }
 
 export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 	public static readonly supportedProtocols = [{ name: HotOstrich.KIND, version: HotOstrich.VERSION }] as const
 
-	public constructor(window: Window, clientWindow: Window, private readonly providerId: string, private readonly hotOstrichHandler: HotOstrichHandler) {
-		super(window, clientWindow)
+	private readonly capabilities = new Set<Capability>()
+
+	private _walletAddress?: HotOstrich.WalletAddressChanged['payload']['address'] = undefined
+	public get walletAddress(): HotOstrich.WalletAddressChanged['payload']['address'] | undefined { return this._walletAddress }
+	public set walletAddress(newWalletAddress: Uint8Array & {length:20} | undefined) {
+		if (newWalletAddress === this._walletAddress) return
+		this._walletAddress = newWalletAddress
+		this.updateCapabilities({'address': !!this._walletAddress})
+		// we don't announce wallet changes when it is being set to undefined, that is handled through the dropping of the `address` capability
+		if (this._walletAddress !== undefined) {
+			this.send({
+				type: 'notification',
+				kind: 'wallet_address_changed',
+				payload: { address: this._walletAddress }
+			})
+		}
+	}
+
+	public readonly updateCapabilities = (capabilitiesToUpdate: Partial<{[key in Capability]: boolean}>) => {
+		let capabilitiesChanged = false
+		for (const capability of HotOstrich.ALL_CAPABILITIES) {
+			const newCapabilityState = capabilitiesToUpdate[capability]
+			if (newCapabilityState === undefined) continue
+
+			// the address is managed internally, but lets let people clear that capability this way for convenience
+			if (capability === 'address') {
+				if (!newCapabilityState) this._walletAddress = undefined
+				else if (this._walletAddress === undefined) throw new Error(`To update the address capability you must set the walletAddress property on this class.`)
+			}
+
+			if (newCapabilityState === this.capabilities.has(capability)) continue
+			capabilitiesChanged = true
+
+			if (newCapabilityState) this.capabilities.add(capability)
+			else this.capabilities.delete(capability)
+		}
+
+		if (capabilitiesChanged) {
+			this.send({
+				type: 'notification',
+				kind: 'capabilities_changed',
+				payload: { capabilities: this.capabilities }
+			})
+		}
+	}
+
+	public constructor(incomingWindow: IncomingWindowLike, outgoingWindow: OutgoingWindowLike, private readonly providerId: string, private readonly hotOstrichHandler: HotOstrichHandler) {
+		super(incomingWindow, outgoingWindow)
 	}
 
 	protected readonly onClientMessage = async (message: HotOstrich.ClientMessage): Promise<void> => {
@@ -125,12 +180,13 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 	private readonly onRequest = async (message: HotOstrich.ClientRequest): Promise<void> => {
 		try {
 			const payload = (message.kind === 'get_capabilities') ? await this.onGetCapabilities(message.payload)
-				: (message.kind === 'get_signer_address') ? await this.onGetSignerAddress(message.payload)
+				: (message.kind === 'get_wallet_address') ? await this.onGetWalletAddress(message.payload)
 				: (message.kind === 'local_contract_call') ? await this.onLocalContractCall(message.payload)
 				: (message.kind === 'sign_message') ? await this.onSignMessage(message.payload)
 				: (message.kind === 'submit_contract_call') ? await this.onSubmitContractCall(message.payload)
 				: (message.kind === 'submit_contract_deployment') ? await this.onSubmitContractDeployment(message.payload)
 				: (message.kind === 'submit_native_token_transfer') ? await this.onSubmitNativeTokenTransfer(message.payload)
+				: (message.kind === 'get_balance') ? await this.onGetBalance(message.payload)
 				: assertNever(message)
 			this.send({
 				type: 'response',
@@ -146,21 +202,26 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 				kind: message.kind,
 				correlation_id: message.correlation_id,
 				success: false,
-				error: {
-					message: error.message || 'Unknown error occurred while processing request.',
+				payload: {
+					message: (typeof error === 'object' && 'message' in error) ? error.message : 'Unknown error occurred while processing request.',
 					data: JSON.stringify(error),
 				},
-				payload: {}
 			})
 		}
 	}
 
 	private readonly onGetCapabilities = async (_: HotOstrich.GetCapabilities.Request['payload']): Promise<HotOstrich.GetCapabilities.SuccessResponse['payload']> => {
-		return { capabilities: await this.hotOstrichHandler.getCapabilities() }
+		return { capabilities: this.capabilities }
 	}
 
-	private readonly onGetSignerAddress = async (_: HotOstrich.GetSignerAddress.Request['payload']): Promise<HotOstrich.GetSignerAddress.SuccessResponse['payload']> => {
-		return { address: await this.hotOstrichHandler.getSignerAddress() }
+	private readonly onGetWalletAddress = async (_: HotOstrich.GetAddress.Request['payload']): Promise<HotOstrich.GetAddress.SuccessResponse['payload']> => {
+		// it is an error to ask for a wallet address when the 'address' capability is disabled, so just politely error if the user tries to call this while walletAddress is undefined
+		if (this.walletAddress === undefined) throw new Error(`No wallet address available.`)
+		return { address: this.walletAddress }
+	}
+
+	private readonly onGetBalance = async (requestPayload: HotOstrich.GetBalance.Request['payload']): Promise<HotOstrich.GetBalance.SuccessResponse['payload']> => {
+		return { balance: await this.hotOstrichHandler.getBalance(requestPayload.address) }
 	}
 
 	private readonly onLocalContractCall = async (requestPayload: HotOstrich.LocalContractCall.Request['payload']): Promise<HotOstrich.LocalContractCall.SuccessResponse['payload']> => {
@@ -184,5 +245,9 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 	}
 }
 
+const isMessageEvent = (maybe: object): maybe is MessageEvent => 'data' in maybe
 const isEthereumMessageEvent = (event: MessageEvent): event is EthereumMessageEvent => typeof event.data === 'object' && 'ethereum' in event.data && typeof event.data.ethereum === 'object'
 const isClientMessage = (message: Message): message is ClientMessage => message.type === 'broadcast' || message.type === 'request'
+
+type ExtractReadonlySetType<T extends ReadonlySet<any>> = T extends ReadonlySet<infer U> ? U : never
+type Capability = ExtractReadonlySetType<HotOstrich.CapabilitiesChanged['payload']['capabilities']>

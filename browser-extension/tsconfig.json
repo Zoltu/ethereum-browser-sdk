@@ -3,8 +3,8 @@
 		"target": "esnext",
 		"module": "esnext",
 		"moduleResolution": "node",
-		"outDir": "output",
-		"rootDir": "source",
+		"outDir": "app/js",
+		"rootDir": "app/ts",
 		"sourceMap": true,
 		"inlineSources": true,
 		"strict": true,
@@ -17,6 +17,6 @@
 		"lib": [ "dom", "es2018" ],
 	},
 	"include": [
-		"source/**/*.ts",
+		"app/ts/**/*.ts",
 	]
 }

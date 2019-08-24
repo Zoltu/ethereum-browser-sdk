@@ -1,0 +1,55 @@
+body, html {
+	width: 100%;
+	height: 100%;
+	margin: 0px;
+	padding: 0px;
+}
+
+main {
+	position: absolute;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	width: 100%;
+	height: 100%;
+}
+
+main iframe {
+	flex-grow: 1;
+	border: none;
+	margin: 0;
+	padding: 0;
+}
+
+main aside {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	margin: 5px;
+}
+
+main aside form {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+main aside form input {
+	flex-grow: 1;
+}
+
+main aside form button {
+	flex-grow: 0;
+	width: 100px;
+}
+
+.monospace {
+	font-family: monospace;
+}
+
+.mnemonic-error {
+	color: indianred;
+	background-color: lightyellow;
+	width: 100vw;
+}

@@ -4,12 +4,13 @@
 	"license": "Unlicense",
 	"dependencies": {
 		"@zoltu/ethereum-browser-sdk": "file:../ethereum-browser-sdk/library",
-		"@zoltu/ethereum-types": "3.0.0",
+		"es-module-shims": "0.4.5",
 		"webextension-polyfill": "0.4.0"
 	},
 	"devDependencies": {
 		"@types/firefox-webext-browser": "67.0.2",
-		"recursive-fs": "1.1.2"
+		"recursive-fs": "1.1.2",
+		"typescript": "3.6.3"
 	},
 	"scripts": {
 		"clean": "recursive-delete \"output\"",

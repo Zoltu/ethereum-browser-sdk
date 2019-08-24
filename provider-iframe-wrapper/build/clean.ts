@@ -1,8 +1,9 @@
 import { recursiveDirectoryDelete } from '@zoltu/file-copier'
-import { outputDirectoryPath } from './paths'
+import { vendorDirectoryPath, buildOutputDirectoryPath } from './paths'
 
 const doStuff = async () => {
-	await recursiveDirectoryDelete(outputDirectoryPath)
+	await recursiveDirectoryDelete(vendorDirectoryPath)
+	await recursiveDirectoryDelete(buildOutputDirectoryPath)
 }
 
 doStuff().then(() => {

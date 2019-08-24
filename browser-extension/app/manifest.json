@@ -13,6 +13,8 @@
 	"permissions": [
 		"activeTab"
 	],
+	// eval is used by es-module-shims, thus we need to enable it. as a development policy, it should never be used in the background script
+	"content_security_policy": "script-src 'self' blob: 'unsafe-eval'; object-src 'self';",
 	"browser_action": {
 		"default_icon": {
 			"16": "icons/favicon-16x16.png",
@@ -25,9 +27,6 @@
 		"default_area": "navbar"
 	},
 	"background": {
-		"scripts": [
-			"vendor/webextension-polyfill/browser-polyfill.js",
-			"background.js"
-		]
+		"page": "background.html"
 	}
 }

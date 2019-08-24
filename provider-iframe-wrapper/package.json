@@ -3,18 +3,21 @@
 	"repository": {},
 	"license": "Unlicense",
 	"dependencies": {
+		"@zoltu/ethereum-abi-encoder": "1.0.0",
 		"@zoltu/ethereum-browser-sdk": "file:../ethereum-browser-sdk/library",
-		"@zoltu/ethereum-fetch-json-rpc": "2.0.0",
-		"@zoltu/ethereum-types": "3.0.0",
-		"@zoltu/recoverable-wallet-library": "file:../contracts",
-		"es-module-shims": "0.2.15",
-		"knockout": "3.5.0"
+		"@zoltu/ethereum-crypto": "1.0.1",
+		"@zoltu/ethereum-fetch-json-rpc": "2.0.1",
+		"@zoltu/ethereum-types": "3.0.1",
+		"@zoltu/rlp-encoder": "1.0.2",
+		"es-module-shims": "0.4.5",
+		"react": "16.9.0",
+		"react-dom": "16.9.0"
 	},
 	"devDependencies": {
-		"recursive-fs": "1.1.2"
+		"@types/react": "16.9.3",
+		"@types/react-dom": "16.9.1"
 	},
 	"scripts": {
-		"clean": "recursive-delete \"output\"",
 		"watch": "cd build && npx ts-node watch.ts",
 		"build": "cd build && npx ts-node build.ts",
 		"serve": "cd build && npx ts-node serve.ts",
