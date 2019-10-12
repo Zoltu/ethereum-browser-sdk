@@ -1,7 +1,5 @@
-import { ethereum as ethereumCrypto } from '@zoltu/ethereum-crypto'
 import { shared } from '@zoltu/ethereum-browser-sdk'
-import { Encodable, EncodableTuple, MethodSignatureHash, BytesLike } from '@zoltu/ethereum-types'
-import { parseSignature, generateSignature, encodeParameters } from '@zoltu/ethereum-abi-encoder'
+import { Encodable, EncodableTuple, parseSignature, encodeParameters } from '@zoltu/ethereum-abi-encoder'
 
 // https://github.com/Microsoft/TypeScript/issues/17002
 declare global {
@@ -10,18 +8,10 @@ declare global {
 	}
 }
 
-export async function constructorDataBytes(constructorSignature: string, constructorParameters: ReadonlyArray<Encodable>, deploymentBytecode: Iterable<number>): Promise<BytesLike> {
+export async function constructorDataBytes(constructorSignature: string, constructorParameters: ReadonlyArray<Encodable>, deploymentBytecode: Iterable<number>): Promise<Uint8Array> {
 	const parsedSignature = parseSignature(constructorSignature)
 	const encodedParameters = encodeParameters(parsedSignature.inputs, constructorParameters)
-	return [...deploymentBytecode, ...encodedParameters]
-}
-
-export async function toDataBytes(methodSignature: string, parameters: ReadonlyArray<Encodable>): Promise<BytesLike> {
-	const parsedSignature = parseSignature(methodSignature)
-	const canonicalSignature = generateSignature(parsedSignature)
-	const signatureHashBytes = MethodSignatureHash.fromUnsignedInteger(await ethereumCrypto.functionSignatureToSelector(canonicalSignature))
-	const encodedParameters = encodeParameters(parsedSignature.inputs, parameters)
-	return [...signatureHashBytes, ...encodedParameters]
+	return new Uint8Array([...deploymentBytecode, ...encodedParameters])
 }
 
 export function contractParametersToEncodables(contractParameters: shared.ContractParameterArray): ReadonlyArray<Encodable> {

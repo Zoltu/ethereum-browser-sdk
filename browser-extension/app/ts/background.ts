@@ -33,6 +33,6 @@ async function onContentScriptConnected(port: browser.runtime.Port): Promise<voi
 		submitContractDeployment: async () => { throw new Error(`Not implemented yet.`) },
 		submitNativeTokenTransfer: async () => { throw new Error(`Not implemented yet.`) },
 	})
-	hotOstrichChannel.walletAddress = new Uint8Array(20) as Uint8Array & {length:20}
+	hotOstrichChannel.walletAddress = 0n
 	hotOstrichChannel.updateCapabilities({call:true,submit:true})
 }

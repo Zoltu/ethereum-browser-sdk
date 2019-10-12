@@ -55,5 +55,13 @@
 			"runtimeArgs": [ "-r", "ts-node/register", ],
 			"args": [ "${workspaceFolder}/sample-dapp/build/serve.ts", ],
 		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "ledger - tests",
+			"cwd": "${workspaceFolder}/ethereum-ledger/library",
+			"runtimeArgs": [ "-r", "ts-node/register", ],
+			"args": [ "${workspaceFolder}/ethereum-ledger/library/sandbox.ts", ],
+		},
 	]
 }

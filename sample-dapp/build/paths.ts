@@ -11,5 +11,4 @@ export const vendorMapping: { [key: string]: string } = {
 	'react-dom': path.join(nodeModuleDirectoryPath, 'react-dom', 'umd'),
 	'es-module-shims': path.join(nodeModuleDirectoryPath, 'es-module-shims', 'dist'),
 	'@zoltu/ethereum-browser-sdk': path.join(nodeModuleDirectoryPath, '@zoltu', 'ethereum-browser-sdk', 'output-es'),
-	'@zoltu/ethereum-types': path.join(nodeModuleDirectoryPath, '@zoltu', 'ethereum-types', 'output-es'),
 }

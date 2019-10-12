@@ -1,20 +1,19 @@
-import { Address } from '@zoltu/ethereum-types'
 import { ErrorHandler } from '../library/error-handler'
-import { decimalStringToBigintEth } from '../library/utils'
+import { decimalStringToBigintEth, hexStringToBigint } from '../library/utils'
 
 interface SendTokenModel {
 	readonly errorHandler: ErrorHandler
-	readonly onSendToken: (token: Address, amount: bigint, destination: Address) => Promise<void>
+	readonly onSendToken: (token: bigint, amount: bigint, destination: bigint) => Promise<void>
 	readonly symbol: string
-	readonly address: Address
+	readonly address: bigint
 }
 export const SendToken = (model: SendTokenModel) => {
-	const [amount, setAmount] = React.useState('')
-	const [destination, setDestination] = React.useState('')
+	const [amountString, setAmountString] = React.useState('')
+	const [destinationString, setDestinationString] = React.useState('')
 	const [sending, setSending] = React.useState(false)
 	const validate = (): boolean => {
-		if (!/^\d+(.\d+)?$/.test(amount)) return false
-		if (!/^(0x)?[a-zA-Z0-9]{40}$/.test(destination)) return false
+		if (!/^\d+(.\d+)?$/.test(amountString)) return false
+		if (!/^(0x)?[a-zA-Z0-9]{40}$/.test(destinationString)) return false
 		return true
 	}
 	const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -23,7 +22,10 @@ export const SendToken = (model: SendTokenModel) => {
 		if (sending) return
 		setSending(true)
 		try {
-			await model.onSendToken(model.address, decimalStringToBigintEth(amount)!, Address.fromHexString(destination))
+			// we can only reach this code if `validate` passes, so we know that at this point both of these values will match the expected form
+			const amount = decimalStringToBigintEth(amountString)!
+			const destination = hexStringToBigint(destinationString)!
+			await model.onSendToken(model.address, amount, destination)
 		} finally {
 			setSending(false)
 		}
@@ -31,8 +33,8 @@ export const SendToken = (model: SendTokenModel) => {
 	return <>
 		<h3>Send {model.symbol}</h3>
 		<form className='send-token-form' onSubmit={onSubmit}>
-			<input type='number' step='1e-18' placeholder='Amount of ETH to send' pattern='^\d+(?:\.\d+)?$' value={amount} onChange={event => setAmount(event.target.value)} />
-			<input type='text' placeholder='Recipient Address' pattern='(?:0x)?[a-zA-Z0-9]{40}' value={destination} onChange={event => setDestination(event.target.value)}/>
+			<input type='number' step='1e-18' placeholder='Amount of ETH to send' pattern='^\d+(?:\.\d+)?$' value={amountString} onChange={event => setAmountString(event.target.value)} />
+			<input type='text' placeholder='Recipient Address' pattern='(?:0x)?[a-zA-Z0-9]{40}' value={destinationString} onChange={event => setDestinationString(event.target.value)}/>
 			<div className='asset-manager send-eth-button-slot'>
 				{ !sending && <button type='submit' disabled={!validate()}>Send</button> }
 				{ sending && <div className='lds-facebook'><div></div><div></div><div></div></div> }
@@ -43,10 +45,10 @@ export const SendToken = (model: SendTokenModel) => {
 
 interface SendTokensModel {
 	readonly errorHandler: ErrorHandler
-	readonly onSendToken: (token: Address, amount: bigint, destination: Address) => Promise<void>
+	readonly onSendToken: (token: bigint, amount: bigint, destination: bigint) => Promise<void>
 	readonly tokens: readonly {
 		symbol: string
-		address: Address
+		address: bigint
 	}[]
 }
 export const SendTokens = (model: SendTokensModel) => <>

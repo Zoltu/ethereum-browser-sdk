@@ -14,7 +14,7 @@
 		"noImplicitReturns": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"lib": [ "dom", "es2018" ],
+		"lib": [ "dom", "es2018", "esnext.bigint" ],
 	},
 	"include": [
 		"app/ts/**/*.ts",

@@ -1,10 +1,11 @@
-import { Address, Bytes32, JsonRpc, Bytes, Bytes1 } from '@zoltu/ethereum-types'
+import { JsonRpc, Bytes } from '@zoltu/ethereum-types'
 import { provider } from '@zoltu/ethereum-browser-sdk'
-import { ethereum, keccak256, secp256k1 } from '@zoltu/ethereum-crypto'
+import { ethereum, keccak256 } from '@zoltu/ethereum-crypto'
 import { FetchJsonRpc } from '@zoltu/ethereum-fetch-json-rpc'
 import { ErrorHandler } from './error-handler'
 import { SigningWallet, NonSigningWallet } from './wallet'
-import { contractParametersToEncodables, toDataBytes, constructorDataBytes } from './abi-stuff'
+import { contractParametersToEncodables, constructorDataBytes } from './abi-stuff'
+import { encodeMethod } from '@zoltu/ethereum-abi-encoder'
 
 const JSON_RPC_ADDRESS = 'https://parity.zoltu.io/'
 
@@ -26,22 +27,15 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 	public readonly updateWallet = (wallet: SigningWallet | NonSigningWallet | undefined) => {
 		this.wallet = wallet
 		this.hotOstrichChannel.walletAddress = (this.wallet === undefined) ? undefined : this.wallet.ethereumAddress
-		this.hotOstrichChannel.updateCapabilities({'sign': (this.wallet !== undefined && 'privateKey' in this.wallet)})
+		this.hotOstrichChannel.updateCapabilities({'sign': (this.wallet !== undefined && 'sign' in this.wallet)})
 		this.jsonRpc = this.createJsonRpc()
 	}
 
 	private readonly createJsonRpc = () => {
-		const getGasPrice = async () => 10n**9n
+		const getGasPrice = async () => 2n*10n**9n
 		const wallet = this.wallet
-		const getSignerAddress = (wallet == undefined) ? undefined : async () => wallet.ethereumAddress
-		const signer = (wallet === undefined || !('privateKey' in wallet)) ? undefined : async (bytes: Bytes) => {
-			const signature = await ethereum.signRaw(wallet.privateKey, bytes)
-			return {
-				r: Bytes32.fromUnsignedInteger(signature.r),
-				s: Bytes32.fromUnsignedInteger(signature.s),
-				v: Bytes1.fromUnsignedInteger(signature.recoveryParameter + 27)
-			}
-		}
+		const getSignerAddress = (wallet === undefined) ? undefined : async () => wallet.ethereumAddress
+		const signer = (wallet === undefined) || !('sign' in wallet) ? undefined : wallet.sign
 		return new FetchJsonRpc(JSON_RPC_ADDRESS, this.window.fetch.bind(this.window), getGasPrice, getSignerAddress, signer)
 	}
 	private jsonRpc: JsonRpc = this.createJsonRpc()
@@ -55,9 +49,9 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 	}
 
 	public readonly localContractCall: provider.HotOstrichHandler['localContractCall'] = async request => {
-		const from = (this.wallet || {}).ethereumAddress || new Address()
+		const from = (this.wallet || {}).ethereumAddress || 0n
 		const parameters = contractParametersToEncodables(request.method_parameters)
-		const data = await toDataBytes(request.method_signature, parameters)
+		const data = await encodeMethod(keccak256.hash, request.method_signature, parameters)
 		return await this.jsonRpc.offChainContractCall({
 			from: from,
 			to: request.contract_address,
@@ -70,19 +64,20 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 
 	public readonly signMessage: provider.HotOstrichHandler['signMessage'] = async message => {
 		const wallet = this.wallet
-		if (wallet === undefined || !('privateKey' in wallet)) throw new Error(`Cannot sign a message without a signing wallet.`)
-		const bytesToHash = ethereum.mutateMessageForSigning(message)
+		if (wallet === undefined || !('sign' in wallet)) throw new Error(`Cannot sign a message without a signing wallet.`)
+		const bytesToHash = Bytes.fromByteArray(ethereum.mutateMessageForSigning(message))
 		const stringToHash = new TextDecoder().decode(bytesToHash)
 		const bytesToSign = await keccak256.hash(bytesToHash)
-		const signature = await secp256k1.sign(wallet.privateKey, bytesToSign)
+		const signature = await wallet.sign(bytesToHash, Bytes.fromStringLiteral(message))
+		if (signature.v !== 27n && signature.v !== 28n) throw new Error(`Message signature contained an invalid 'v' (${signature.v}), verify signing tool is correctly signing messages.`)
 		return {
 			requested_message: message,
 			signed_message: stringToHash,
-			signed_bytes: Bytes32.fromUnsignedInteger(bytesToSign),
+			signed_bytes: bytesToSign,
 			signature: {
 				r: signature.r,
 				s: signature.s,
-				v: signature.recoveryParameter + 27,
+				v: signature.v,
 			}
 		}
 	}
@@ -92,7 +87,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 		if (this.wallet === undefined) throw new Error(`Cannot submit a contract call without a wallet.`)
 
 		const parameters = contractParametersToEncodables(request.method_parameters)
-		const data = await toDataBytes(request.method_signature, parameters)
+		const data = await encodeMethod(keccak256.hash, request.method_signature, parameters)
 		const receipt = await jsonRpc.onChainContractCall({
 			to: request.contract_address,
 			data: data,

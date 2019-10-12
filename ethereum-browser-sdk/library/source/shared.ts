@@ -4,11 +4,11 @@
  * bigint => int<M> for 0 < M <= 256, M % 8 == 0
  * bigint => ufixed<M>x<N> for 8 <= M <= 256, M % 8 == 0 and 0 < N <= 80
  * bigint => fixed<M>x<N> for 8 <= M <= 256, M % 8 == 0 and 0 < N <= 80
- * number => uint<M> for 0 < M <= 48, M % 8 == 0
- * number => int<M> 0 < M <= 48, M % 8 == 0
+ * bigint => uint<M> for 0 < M <= 48, M % 8 == 0
+ * bigint => int<M> 0 < M <= 48, M % 8 == 0
  * string => string
- * Uint8Array(20) => address
- * Uint8Array(M) => bytes<M> for 0 < M <= 32
+ * bigint => address
+ * bigint => bytes<M> for 0 < M <= 32
  * Uint8Array => bytes
  * Uint8Array => function
  * Array<type>(M) => <type>[M] for type is any type in this list
@@ -16,7 +16,7 @@
  * Array<type>(N) => (T1,T2,...,Tn) for T is any type in this list
  * object => (T1 N1,T2 N2,...,Tn Nn) for T is any type in this list and N is a name
  */
-export type ContractParameter = Uint8Array | bigint | number | boolean | string | ContractParameterArray | ContractParameterTuple
+export type ContractParameter = Uint8Array | bigint | boolean | string | ContractParameterArray | ContractParameterTuple
 export interface ContractParameterArray extends ReadonlyArray<ContractParameter> { }
 export interface ContractParameterTuple { [key: string]: ContractParameter }
 
@@ -126,18 +126,18 @@ export namespace HotOstrich {
 			readonly kind: 'submit_native_token_transfer'
 			readonly type: 'request'
 			readonly payload: {
-				/** 20 bytes long */
-				readonly to: Uint8Array & {length:20}
+				/** 0 <= to < 2^160 */
+				readonly to: bigint
 				/** 0 <= value < 2^256 */
 				readonly value: bigint
-				/** 0 <= nonce <= 2^52; nonce % 1 == 0 */
-				readonly nonce?: number
-				/** 0 <= gas_price <= 2^256 */
+				/** 0 <= nonce < 2^256 */
+				readonly nonce?: bigint
+				/** 0 <= gas_price < 2^256 */
 				readonly gas_price?: bigint
-				/** 0 <= gas <= 2^52; gas_limit % 1 == 0 */
-				readonly gas_limit?: number
-				/** 0 <= chainId < 2^52; nonce % 1 == 0 */
-				readonly chainId?: number
+				/** 0 <= gas < 2^256 */
+				readonly gas_limit?: bigint
+				/** 0 <= chain_id < 2^256 */
+				readonly chain_id?: bigint
 			}
 		}
 		export interface SuccessResponse extends Kind, BaseSuccessResponse {
@@ -166,21 +166,21 @@ export namespace HotOstrich {
 			readonly kind: 'submit_contract_call'
 			readonly type: 'request'
 			readonly payload: {
-				/** 20 bytes long */
-				readonly contract_address: Uint8Array & {length:20}
+				/** 0 <= contract_address < 2^160 */
+				readonly contract_address: bigint
 				/** ABI style: `myMethod(address,address[],uint256,(bool,bytes))` */
 				readonly method_signature: string
 				readonly method_parameters: ReadonlyArray<ContractParameter>
 				/** 0 <= value < 2^256 */
 				readonly value: bigint
-				/** 0 <= nonce <= 2^52; nonce % 1 == 0 */
-				readonly nonce?: number
-				/** 0 <= gas_price <= 2^256 */
+				/** 0 <= nonce < 2^256 */
+				readonly nonce?: bigint
+				/** 0 <= gas_price < 2^256 */
 				readonly gas_price?: bigint
-				/** 0 <= gas <= 2^52; gas_limit % 1 == 0 */
-				readonly gas_limit?: number
-				/** 0 <= chainId < 2^52; nonce % 1 == 0 */
-				readonly chainId?: number
+				/** 0 <= gas < 2^256 */
+				readonly gas_limit?: bigint
+				/** 0 <= chain_id < 2^256 */
+				readonly chain_id?: bigint
 				/** Something like EIP 719 for presenting the user with a custom interface for transaction presentation. Validated by signer against contract with transaction details. */
 				readonly presentation_dsls: { [name: string]: unknown }
 			}
@@ -217,14 +217,14 @@ export namespace HotOstrich {
 				readonly constructor_parameters: ReadonlyArray<ContractParameter>
 				/** 0 <= value < 2^256 */
 				readonly value: bigint
-				/** 0 <= nonce <= 2^52; nonce % 1 == 0 */
-				readonly nonce?: number
-				/** 0 <= gas_price <= 2^256 */
+				/** 0 <= nonce < 2^256 */
+				readonly nonce?: bigint
+				/** 0 <= gas_price < 2^256 */
 				readonly gas_price?: bigint
-				/** 0 <= gas <= 2^52; gas_limit % 1 == 0 */
-				readonly gas_limit?: number
-				/** 0 <= chainId < 2^52; nonce % 1 == 0 */
-				readonly chainId?: number
+				/** 0 <= gas_limit < 2^256 */
+				readonly gas_limit?: bigint
+				/** 0 <= chain_id < 2^256 */
+				readonly chain_id?: bigint
 			}
 		}
 		export interface SuccessResponse extends Kind, BaseSuccessResponse {
@@ -264,16 +264,16 @@ export namespace HotOstrich {
 				readonly requested_message: string
 				/** The message that was actually signed. */
 				readonly signed_message: string
-				/** 32 bytes long.  The keccak256 of `signed_message`, which is what is really signed. */
-				readonly signed_bytes: Uint8Array & {length:32}
-				/** The signature of the keccak256 of `signed_message` */
+				/** The keccak256 of `signed_message`, which is what is really signed. */
+				readonly signed_bytes: bigint
+				/** The signature of `signed_bytes` */
 				readonly signature: {
-					/** 27 | 28 */
-					readonly v: number
 					/** 0 <= value < 2^256 */
 					readonly r: bigint
 					/** 0 <= value < 2^256 */
 					readonly s: bigint
+					/** 27 | 28 */
+					readonly v: 27n | 28n
 				}
 			}
 		}
@@ -319,7 +319,7 @@ export namespace HotOstrich {
 			readonly kind: 'get_balance'
 			readonly type: 'request'
 			readonly payload: {
-				address: Uint8Array & {length:20}
+				address: bigint
 			}
 		}
 		export interface SuccessResponse extends Kind, BaseSuccessResponse {
@@ -349,19 +349,19 @@ export namespace HotOstrich {
 			readonly kind: 'local_contract_call'
 			readonly type: 'request'
 			readonly payload: {
-				/** 20 bytes long */
-				readonly contract_address: Uint8Array & {length:20}
+				/** 0 <= contract_address < 2^256 */
+				readonly contract_address: bigint
 				/** ABI style: `myMethod(address,address[],uint256,(bool,bytes))` */
 				readonly method_signature: string
 				readonly method_parameters: ReadonlyArray<ContractParameter>
 				/** 0 <= value < 2^256 */
 				readonly value: bigint
-				/** 20 bytes long */
-				readonly caller?: Uint8Array & {length:20}
-				/** 0 <= gas_price <= 2^256 */
+				/** 0 <= caller < 2^256 */
+				readonly caller?: bigint
+				/** 0 <= gas_price < 2^256 */
 				readonly gas_price?: bigint
-				/** 0 <= gas <= 2^52; gas_limit % 1 == 0 */
-				readonly gas_limit?: number
+				/** 0 <= gas_limit < 2^256 */
+				readonly gas_limit?: bigint
 			}
 		}
 		export interface SuccessResponse extends Kind, BaseSuccessResponse {
@@ -404,7 +404,7 @@ export namespace HotOstrich {
 		readonly kind: 'wallet_address_changed'
 		readonly type: 'notification'
 		readonly payload: {
-			readonly address: Uint8Array & {length:20}
+			readonly address: bigint
 		}
 	}
 

@@ -3,18 +3,19 @@
 	"repository": {},
 	"license": "Unlicense",
 	"dependencies": {
-		"@zoltu/ethereum-abi-encoder": "1.0.0",
+		"@zoltu/ethereum-abi-encoder": "3.2.2",
 		"@zoltu/ethereum-browser-sdk": "file:../ethereum-browser-sdk/library",
-		"@zoltu/ethereum-crypto": "1.0.1",
-		"@zoltu/ethereum-fetch-json-rpc": "2.0.1",
-		"@zoltu/ethereum-types": "3.0.1",
+		"@zoltu/ethereum-crypto": "2.0.0",
+		"@zoltu/ethereum-fetch-json-rpc": "9.0.0",
+		"@zoltu/ethereum-ledger": "3.0.0",
+		"@zoltu/ethereum-types": "8.0.0",
 		"@zoltu/rlp-encoder": "1.0.2",
 		"es-module-shims": "0.4.5",
-		"react": "16.9.0",
-		"react-dom": "16.9.0"
+		"react": "16.10.2",
+		"react-dom": "16.10.2"
 	},
 	"devDependencies": {
-		"@types/react": "16.9.3",
+		"@types/react": "16.9.5",
 		"@types/react-dom": "16.9.1"
 	},
 	"scripts": {

@@ -118,10 +118,10 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 
 	private _walletAddress?: HotOstrich.WalletAddressChanged['payload']['address'] = undefined
 	public get walletAddress(): HotOstrich.WalletAddressChanged['payload']['address'] | undefined { return this._walletAddress }
-	public set walletAddress(newWalletAddress: Uint8Array & {length:20} | undefined) {
+	public set walletAddress(newWalletAddress: bigint | undefined) {
 		if (newWalletAddress === this._walletAddress) return
 		this._walletAddress = newWalletAddress
-		this.updateCapabilities({'address': !!this._walletAddress})
+		this.updateCapabilities({'address': this._walletAddress !== undefined})
 		// we don't announce wallet changes when it is being set to undefined, that is handled through the dropping of the `address` capability
 		if (this._walletAddress !== undefined) {
 			this.send({

@@ -1,13 +1,12 @@
-import { Address } from '@zoltu/ethereum-types'
 import { ErrorHandler } from '../library/error-handler'
 import { SendTokens } from './send-token'
 import { SendEth } from './send-eth'
 
 interface AssetManagerModel {
 	readonly errorHandler: ErrorHandler
-	readonly onSendEth: (amount: bigint, destination: Address) => Promise<void>
-	readonly onSendToken: (token: Address, amount: bigint, destination: Address) => Promise<void>
-	readonly tokens: readonly { symbol: string, address: Address }[]
+	readonly onSendEth: (amount: bigint, destination: bigint) => Promise<void>
+	readonly onSendToken: (token: bigint, amount: bigint, destination: bigint) => Promise<void>
+	readonly tokens: readonly { symbol: string, address: bigint }[]
 }
 
 export const AssetManager = (model: AssetManagerModel) => {

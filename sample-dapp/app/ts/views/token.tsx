@@ -1,4 +1,3 @@
-import { Address } from '@zoltu/ethereum-types'
 import { ErrorHandler } from '../library/error-handler'
 import { bigintEthToDecimalString } from '../library/utils'
 
@@ -20,10 +19,10 @@ export const Token = (model: TokenModel) => {
 
 interface TokensModel {
 	readonly erroHandler: ErrorHandler
-	readonly getTokenBalance: (address: Address) => Promise<bigint>
+	readonly getTokenBalance: (address: bigint) => Promise<bigint>
 	readonly tokens: readonly {
 		symbol: string
-		address: Address
+		address: bigint
 	}[]
 }
 export const Tokens = (model: TokensModel) => <div className='tokens'>

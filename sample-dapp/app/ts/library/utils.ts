@@ -1,5 +1,3 @@
-import { Address } from '@zoltu/ethereum-types'
-
 export function decimalStringToBigintEth(valueString: string): bigint | undefined {
 	if (!/^\d+(?:\.\d+)?$/.test(valueString)) return undefined
 	const splitValueString = valueString.split('.')
@@ -14,16 +12,20 @@ export function bigintEthToDecimalString(value: bigint): string {
 	if (fractionalPart === 0n) {
 		return integerPart.toString(10)
 	} else {
-		return `${integerPart}.${fractionalPart}`
+		return `${integerPart.toString(10)}.${fractionalPart.toString(10).padStart(18, '0')}`
 	}
 }
 
-export function addressStringToAddress(valueString: string): Address | undefined {
+export function hexStringToBigint(valueString: string): bigint | undefined {
 	if (!/(?:0x)?[a-zA-Z0-9]{40}/.test(valueString)) return undefined
-	return Address.fromHexString(valueString)
+	const prefix = (valueString.startsWith('0x')) ? '' : '0x'
+	return BigInt(`${prefix}${valueString}`)
 }
 
-export function maybeToAddress(value: Uint8Array&{length:20} | undefined) {
-	if (value === undefined) return undefined
-	else return Address.fromByteArray(value)
+export function uint8ArrayToUnsignedBigint(uint8Array: Iterable<number>): bigint {
+	let value = 0n
+	for (let byte of uint8Array) {
+		value = (value << 8n) + BigInt(byte)
+	}
+	return value
 }

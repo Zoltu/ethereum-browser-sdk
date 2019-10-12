@@ -13,11 +13,28 @@
 		{
 			"type": "npm",
 			"script": "watch",
-			"path": "sample-site/",
-			"problemMatcher": [
-				"$tsc-watch"
-			],
-			"isBackground": true
+			"path": "provider-iframe-wrapper/",
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"type": "npm",
+			"script": "watch",
+			"path": "sample-dapp/",
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"type": "npm",
+			"script": "serve",
+			"path": "provider-iframe-wrapper/",
+			"problemMatcher": []
+		},
+		{
+			"type": "npm",
+			"script": "serve",
+			"path": "sample-dapp/",
+			"problemMatcher": []
 		}
 	]
 }

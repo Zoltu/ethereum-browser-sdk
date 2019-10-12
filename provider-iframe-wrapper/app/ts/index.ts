@@ -1,39 +1,22 @@
+import { provider } from '@zoltu/ethereum-browser-sdk';
 import { Wallet } from './library/wallet';
 import { ErrorHandler } from './library/error-handler';
-import { App } from './views/app';
 import { HandshakeHandler } from './library/handshake-handler';
 import { HotOstrichChannel } from './library/hot-ostrich-channel';
-import { provider } from '@zoltu/ethereum-browser-sdk';
+import { createOnChangeProxy } from './library/proxy';
+import { App, AppModel } from './views/app';
 
-const renderOnChangeProxyHandler: ProxyHandler<any> = {
-	set: (object: any, property, newValue): boolean => {
-		object[property] = typeof newValue === 'object' ? createProxy(newValue) : newValue
-		ReactDOM.render(React.createElement(App, { walletAddress: rootModel.wallet === undefined ? undefined : rootModel.wallet.ethereumAddress, ...rootModel }), main)
-		return true
-	}
-}
-function createProxy<T extends object>(target: T): T {
-	for (const key in target) {
-		if (typeof target[key] !== 'object') continue
-		if (target[key] instanceof Uint8Array) continue
-		target[key] = createProxy(target[key] as unknown as object) as unknown as T[Extract<keyof T, string>]
-	}
-	return new Proxy<T>(target, renderOnChangeProxyHandler)
+function render() {
+	const element = React.createElement(App, rootModel)
+	ReactDOM.render(element, main)
 }
 
 const errorHandler = new ErrorHandler()
 
-interface RootModel {
-	readonly errorHandler: ErrorHandler
-	readonly childWindowChanged: (window: Window|null) => void
-	readonly walletChanged: (wallet: Wallet|undefined) => void
-	wallet: Wallet | undefined
-}
-
 let handshakeChannel: provider.HandshakeChannel | undefined = undefined
 let hotOstrichChannel: HotOstrichChannel | undefined = undefined
 let iframeEventPropagator: ((this: Window, ev: MessageEvent) => any) | undefined = undefined
-const rootModel: RootModel = createProxy<RootModel>({
+const rootModel = createOnChangeProxy<AppModel>(render, {
 	errorHandler,
 	childWindowChanged: childWindow => {
 		if (hotOstrichChannel !== undefined) hotOstrichChannel.shutdown()
@@ -55,6 +38,7 @@ const rootModel: RootModel = createProxy<RootModel>({
 	},
 	wallet: undefined,
 })
+
 ;(window as any).rootModel = rootModel
 const main = document.querySelector('main')
 ReactDOM.render(React.createElement(App, { walletAddress: rootModel.wallet === undefined ? undefined : rootModel.wallet.ethereumAddress, ...rootModel}), main)

@@ -1,4 +1,3 @@
-import { Address } from '@zoltu/ethereum-types'
 import { ErrorHandler } from '../library/error-handler'
 import { Wallet, createNonSigningWallet } from '../library/wallet'
 
@@ -17,7 +16,7 @@ export const AddressInput = (model: AddressInputModel) => {
 		if (generatingWallet) return setQueuedAddressWalletGeneration(event)
 		setGeneratingWallet(true)
 		try {
-			const address = /^(0x)?[a-zA-Z0-9]{40}$/.test(event.target.value) ? Address.fromHexString(event.target.value) : undefined
+			const address = /^(0x)?[a-zA-Z0-9]{40}$/.test(event.target.value) ? BigInt(`${(event.target.value.startsWith('0x')) ? '' : '0x'}${event.target.value}`) : undefined
 			const wallet = address === undefined ? undefined : await createNonSigningWallet(address)
 			model.walletChanged(wallet)
 		} finally {

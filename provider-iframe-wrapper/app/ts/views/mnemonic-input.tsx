@@ -1,6 +1,6 @@
 import { mnemonic } from '@zoltu/ethereum-crypto'
 import { ErrorHandler } from '../library/error-handler'
-import { Wallet, createSigningWallet } from '../library/wallet'
+import { Wallet, createMemoryWallet } from '../library/wallet'
 
 export interface MnemonicInputModel {
 	readonly errorHandler: ErrorHandler
@@ -38,7 +38,7 @@ export const MnemonicInput = (model: MnemonicInputModel) => {
 			if (words.length === 0) return model.walletChanged(undefined)
 			const mnemonicError = await mnemonic.getErrorReason(words)
 			setMnemonicError(mnemonicError === null ? '' : mnemonicError)
-			const wallet = mnemonicError === null ? await createSigningWallet(words) : undefined
+			const wallet = mnemonicError === null ? await createMemoryWallet(words) : undefined
 			model.walletChanged(wallet)
 		} finally {
 			setGeneratingWallet(false)

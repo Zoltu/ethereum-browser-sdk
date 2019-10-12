@@ -1,8 +1,8 @@
-import { Address, Bytes32 } from '@zoltu/ethereum-types'
 import { client } from '@zoltu/ethereum-browser-sdk'
 import { ErrorHandler } from './library/error-handler'
 import { createOnChangeProxy } from './library/proxy'
 import { AppModel, App } from './views/app'
+import { uint8ArrayToUnsignedBigint } from './library/utils'
 
 const errorHandler = new ErrorHandler()
 
@@ -20,13 +20,14 @@ const rootModel = createOnChangeProxy<AppModel>(render, {
 	onProviderSelected,
 	executors: undefined,
 	providers: [],
-	selectedProviderId: '',
-	wallet: undefined,
+	selectedProvider: {
+		id: ''
+	},
 	tokens: [
-		{ symbol: 'DAI', address: Address.fromUnsignedInteger(0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359n) },
-		{ symbol: 'MKR', address: Address.fromUnsignedInteger(0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2n) },
-		{ symbol: 'REP', address: Address.fromUnsignedInteger(0x1985365e9f78359a9B6AD760e32412f4a445E862n) },
-	]
+		{ symbol: 'DAI', address: 0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359n },
+		{ symbol: 'MKR', address: 0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2n },
+		{ symbol: 'REP', address: 0x1985365e9f78359a9B6AD760e32412f4a445E862n },
+	],
 })
 // put the model on the window for debugging convenience
 ;(window as any).rootModel = rootModel
@@ -48,7 +49,9 @@ new client.HandshakeChannel(window, {
 
 let previousHotOstrichChannel: client.HotOstrichChannel|undefined = undefined
 function onProviderSelected(selectedProviderId: string): void {
-	rootModel.selectedProviderId = selectedProviderId
+	rootModel.selectedProvider = { id: selectedProviderId }
+	// capture the selectedProvider so we don't accidentally update a new one during a switch
+	const selectedProvider = rootModel.selectedProvider
 
 	if (previousHotOstrichChannel !== undefined) previousHotOstrichChannel.shutdown()
 	const hotOstrichChannel = previousHotOstrichChannel = new client.HotOstrichChannel(window, selectedProviderId, {
@@ -56,10 +59,10 @@ function onProviderSelected(selectedProviderId: string): void {
 		onCapabilitiesChanged: () => {
 			rootModel.executors = (hotOstrichChannel.capabilities.has('sign') && hotOstrichChannel.capabilities.has('submit'))
 				? {
-					onSendEth: async (amount: bigint, destination: Address) => {
+					onSendEth: async (amount: bigint, destination: bigint) => {
 						await hotOstrichChannel.submitNativeTokenTransfer({ to: destination, value: amount })
 					},
-					onSendToken: async (address: Address, amount: bigint, destination: Address) => {
+					onSendToken: async (address: bigint, amount: bigint, destination: bigint) => {
 						await hotOstrichChannel.submitContractCall({
 							contract_address: address,
 							method_signature: 'transfer(address destination, uint256 amount)',
@@ -74,25 +77,25 @@ function onProviderSelected(selectedProviderId: string): void {
 		onWalletAddressChanged: () => {
 			// capture the walletAddress object because we will be executing some async code and we don't want to accidentally use the wrong wallet address if it changes
 			const walletAddress = hotOstrichChannel.walletAddress
-			rootModel.wallet = walletAddress === undefined
+			selectedProvider.wallet = walletAddress === undefined
 				? undefined
 				: {
 					getEthBalance: async () => {
 						return await hotOstrichChannel.getBalance(walletAddress)
 					},
-					getTokenBalance: async (address: Address) => {
+					getTokenBalance: async (address: bigint) => {
 						const resultBytes = await hotOstrichChannel.localContractCall({
 							contract_address: address,
 							method_signature: 'balanceOf(address)',
 							method_parameters: [walletAddress],
 							value: 0n
 						})
-						return Bytes32.fromByteArray(resultBytes).toUnsignedBigint()
+						return uint8ArrayToUnsignedBigint(resultBytes)
 					},
-					address: Address.fromByteArray(walletAddress),
+					address: walletAddress,
 					tokens: rootModel.tokens.map(token => ({ ...token, balance: undefined })),
 					ethBalance: undefined,
-				} as Exclude<AppModel['wallet'], undefined>
+				} as Exclude<Exclude<AppModel['selectedProvider'], undefined>['wallet'], undefined>
 		}
 	})
 }
