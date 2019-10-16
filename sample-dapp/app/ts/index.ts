@@ -27,6 +27,7 @@ const rootModel = createOnChangeProxy<AppModel>(render, {
 		{ symbol: 'DAI', address: 0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359n },
 		{ symbol: 'MKR', address: 0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2n },
 		{ symbol: 'REP', address: 0x1985365e9f78359a9B6AD760e32412f4a445E862n },
+		{ symbol: 'TOK', address: 0xa15579ce14e99bfb943a76dcc0d818f30cc408adn },
 	],
 })
 // put the model on the window for debugging convenience
@@ -57,7 +58,7 @@ function onProviderSelected(selectedProviderId: string): void {
 	const hotOstrichChannel = previousHotOstrichChannel = new client.HotOstrichChannel(window, selectedProviderId, {
 		onError: errorHandler.noticeError,
 		onCapabilitiesChanged: () => {
-			rootModel.executors = (hotOstrichChannel.capabilities.has('sign') && hotOstrichChannel.capabilities.has('submit'))
+			rootModel.executors = (hotOstrichChannel.capabilities.has('signTransaction') && hotOstrichChannel.capabilities.has('submit'))
 				? {
 					onSendEth: async (amount: bigint, destination: bigint) => {
 						await hotOstrichChannel.submitNativeTokenTransfer({ to: destination, value: amount })
@@ -93,9 +94,7 @@ function onProviderSelected(selectedProviderId: string): void {
 						return uint8ArrayToUnsignedBigint(resultBytes)
 					},
 					address: walletAddress,
-					tokens: rootModel.tokens.map(token => ({ ...token, balance: undefined })),
-					ethBalance: undefined,
-				} as Exclude<Exclude<AppModel['selectedProvider'], undefined>['wallet'], undefined>
+				}
 		}
 	})
 }

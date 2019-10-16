@@ -17,6 +17,7 @@
 		"noUnusedParameters": true,
 		"lib": [ "dom", "esnext" ],
 		"allowUmdGlobalAccess": true,
+		"experimentalDecorators": true,
 	},
 	"include": [
 		"app/ts/**/*.ts",

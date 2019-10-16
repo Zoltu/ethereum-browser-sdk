@@ -2,39 +2,74 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "watch - extension",
 			"type": "npm",
 			"script": "watch",
 			"path": "browser-extension/",
 			"problemMatcher": [
 				"$tsc-watch"
 			],
-			"isBackground": true
+			"isBackground": true,
 		},
 		{
+			"label": "watch - iframe",
 			"type": "npm",
 			"script": "watch",
 			"path": "provider-iframe-wrapper/",
 			"group": "build",
-			"problemMatcher": []
+			"problemMatcher": [],
+			"isBackground": true,
 		},
 		{
+			"label": "watch - dapp",
 			"type": "npm",
 			"script": "watch",
 			"path": "sample-dapp/",
 			"group": "build",
-			"problemMatcher": []
+			"problemMatcher": [],
+			"isBackground": true,
 		},
 		{
+			"label": "serve - iframe",
 			"type": "npm",
 			"script": "serve",
 			"path": "provider-iframe-wrapper/",
-			"problemMatcher": []
+			"problemMatcher": [],
+			"isBackground": true,
 		},
 		{
+			"label": "serve - dapp",
 			"type": "npm",
 			"script": "serve",
 			"path": "sample-dapp/",
-			"problemMatcher": []
-		}
+			"dependsOn": "",
+			"problemMatcher": [],
+			"isBackground": true,
+		},
+		{
+			"label": "watch - all",
+			"dependsOn": [
+				"watch - extension",
+				"watch - iframe",
+				"watch - dapp",
+			],
+			"problemMatcher": [],
+		},
+		{
+			"label": "serve - all",
+			"dependsOn": [
+				"serve - iframe",
+				"serve - dapp",
+			],
+			"problemMatcher": [],
+		},
+		{
+			"label": "watch & serve",
+			"dependsOn": [
+				"watch - all",
+				"serve - all",
+			],
+			"problemMatcher": [],
+		},
 	]
 }

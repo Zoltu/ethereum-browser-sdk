@@ -1,31 +1,31 @@
-import { ErrorHandler } from '../library/error-handler'
-import { Wallet, createNonSigningWallet } from '../library/wallet'
+import { ErrorHandler } from '../library/error-handler';
 
 export interface AddressInputModel {
 	readonly errorHandler: ErrorHandler
-	readonly walletChanged: (wallet: Wallet|undefined) => void
-	readonly emptyStateChanged: (isEmpty: boolean) => void
+	readonly style?: React.CSSProperties
+	readonly placeholder?: string
+	readonly onChange?: (newValue: bigint | undefined, isEmpty: boolean, isError: boolean) => void
 }
-export const AddressInput = (model: AddressInputModel) => {
-	const [walletAddress, setWalletAddress] = React.useState('')
-	const [generatingWallet, setGeneratingWallet] = React.useState(false)
-	const [queuedAddressWalletGeneration, setQueuedAddressWalletGeneration] = React.useState<React.ChangeEvent<HTMLInputElement>|undefined>(undefined)
-	const addressChanged = async (event: React.ChangeEvent<HTMLInputElement>) => {
-		setWalletAddress(event.target.value)
-		model.emptyStateChanged(event.target.value === '')
-		if (generatingWallet) return setQueuedAddressWalletGeneration(event)
-		setGeneratingWallet(true)
-		try {
-			const address = /^(0x)?[a-zA-Z0-9]{40}$/.test(event.target.value) ? BigInt(`${(event.target.value.startsWith('0x')) ? '' : '0x'}${event.target.value}`) : undefined
-			const wallet = address === undefined ? undefined : await createNonSigningWallet(address)
-			model.walletChanged(wallet)
-		} finally {
-			setGeneratingWallet(false)
-			if (queuedAddressWalletGeneration !== undefined) {
-				await addressChanged(queuedAddressWalletGeneration)
-				setQueuedAddressWalletGeneration(undefined)
-			}
+export function AddressInput(model: AddressInputModel) {
+	const [addressString, setAddressString] = React.useState('')
+	const [error, setError] = React.useState('')
+	const onChange = model.onChange || (() => {})
+	const addressChanged = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void | string> => {
+		setAddressString(event.target.value)
+		setError('')
+		if (event.target.value.length === 0) return onChange(undefined, true, false)
+		if (!/^(0x)?[a-fA-F0-9]{40}$/.test(event.target.value)) {
+			setError(`Address must be 40 characters long with an optional '0x' prefix.`)
+			onChange(undefined, false, true)
+			return
 		}
+		const prefix = (event.target.value.startsWith('0x')) ? '' : '0x'
+		const normalized = `${prefix}${event.target.value}`
+		const address = BigInt(normalized)
+		onChange(address, false, false)
 	}
-	return <input placeholder='wallet address' value={walletAddress} onChange={model.errorHandler.asyncWrapper(addressChanged)}/>
+	return <div style={{ ...model.style, display: 'flex', flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+		<input style={{ flexGrow: 1, ...(error === '' ? {} : { borderColor: 'red' }) }} placeholder={model.placeholder || '0xadd12e55add12e55add12e55add12e55add12e55'} value={addressString} onChange={model.errorHandler.asyncWrapper(addressChanged)}/>
+		<label style={{ width: '100%', color: 'red', fontSize: '80%' }}>{error}</label>
+	</div>
 }

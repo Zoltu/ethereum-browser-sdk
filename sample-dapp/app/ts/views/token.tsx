@@ -10,7 +10,7 @@ interface TokenModel {
 export const Token = (model: TokenModel) => {
 	const [balance, setBalance] = React.useState('Loading...')
 	const refreshBalance = async () => setBalance(bigintEthToDecimalString(await model.getTokenBalance()))
-	React.useEffect(model.errorHandler.asyncWrapper(refreshBalance), [])
+	React.useEffect(model.errorHandler.asyncWrapper(refreshBalance), [model.getTokenBalance])
 	return <div className='token'>
 		<h3>{model.symbol} Balance</h3>
 		<span>{balance}</span>

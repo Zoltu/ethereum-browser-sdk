@@ -408,7 +408,7 @@ export namespace HotOstrich {
 		}
 	}
 
-	export const ALL_CAPABILITIES = ['address','sign','call','submit','log_subscription','log_history'] as const
+	export const ALL_CAPABILITIES = ['address','signTransaction','signMessage','call','submit','log_subscription','log_history'] as const
 	export interface CapabilitiesChanged extends BaseNotification {
 		readonly kind: 'capabilities_changed'
 		readonly type: 'notification'
