@@ -2,6 +2,16 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "watch - sdk",
+			"type": "npm",
+			"script": "watch",
+			"path": "ethereum-browser-sdk/library/",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"isBackground": true,
+		},
+		{
 			"label": "watch - extension",
 			"type": "npm",
 			"script": "watch",
@@ -49,6 +59,7 @@
 		{
 			"label": "watch - all",
 			"dependsOn": [
+				"watch - sdk",
 				"watch - extension",
 				"watch - iframe",
 				"watch - dapp",

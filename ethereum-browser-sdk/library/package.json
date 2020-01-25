@@ -13,6 +13,7 @@
 		"typescript": "3.6.3"
 	},
 	"scripts": {
-		"build": "ttsc --project tsconfig-es.json && tsc --project tsconfig-node.json"
+		"build": "ttsc --project tsconfig-es.json && tsc --project tsconfig-node.json",
+		"watch": "ttsc --project tsconfig-es.json --watch"
 	}
 }
