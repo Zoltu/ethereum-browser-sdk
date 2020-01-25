@@ -157,6 +157,8 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 
 	public readonly localContractCall = async (payload: HotOstrich.LocalContractCall.Request['payload']): Promise<HotOstrich.LocalContractCall.SuccessResponse['payload']['result']> => (await this.promisify<HotOstrich.LocalContractCall.Request, HotOstrich.LocalContractCall.SuccessResponse>('local_contract_call', payload)).result
 
+	public readonly legacyJsonrpc = async (payload: HotOstrich.LegacyJsonRpc.Request['payload']): Promise<HotOstrich.LegacyJsonRpc.SuccessResponse['payload']> => (await this.promisify<HotOstrich.LegacyJsonRpc.Request, HotOstrich.LegacyJsonRpc.SuccessResponse>('legacy_jsonrpc', payload))
+
 	// private because we manage capabilities for the user and expose it in .capabilities
 	private readonly getCapabilities = async () => await this.promisify<HotOstrich.GetCapabilities.Request, HotOstrich.GetCapabilities.SuccessResponse>('get_capabilities', {})
 	// private because we manage wallet address for the user and expose it in .walletAddress

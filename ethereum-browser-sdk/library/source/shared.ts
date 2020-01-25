@@ -400,6 +400,36 @@ export namespace HotOstrich {
 	// 	// CONSIDER: is this necessary?  why do people want to fetch a block for a dapp?  what information do they _really_ want?  What information do end-users care about?
 	// }
 
+	export namespace LegacyJsonRpc {
+		interface Kind extends BaseMessage { readonly kind: 'legacy_jsonrpc' }
+		export interface Request extends Kind, BaseRequest {
+			readonly kind: 'legacy_jsonrpc'
+			readonly type: 'request'
+			readonly payload: {
+				readonly method: string
+				readonly parameters: unknown[]
+			}
+		}
+		export interface SuccessResponse extends Kind, BaseSuccessResponse {
+			readonly kind: 'legacy_jsonrpc'
+			readonly type: 'response'
+			readonly payload: {
+				readonly result: unknown
+			}
+		}
+		export interface FailureResponse extends Kind, BaseFailureResponse {
+			readonly kind: 'legacy_jsonrpc'
+			readonly type: 'response'
+			readonly payload: {
+				readonly message: string
+				readonly data: unknown
+				readonly code?: number
+			}
+		}
+		export type Response = SuccessResponse | FailureResponse
+		export type Message = Request | Response
+	}
+
 	export interface WalletAddressChanged extends BaseNotification {
 		readonly kind: 'wallet_address_changed'
 		readonly type: 'notification'
@@ -408,7 +438,7 @@ export namespace HotOstrich {
 		}
 	}
 
-	export const ALL_CAPABILITIES = ['address','signTransaction','signMessage','call','submit','log_subscription','log_history'] as const
+	export const ALL_CAPABILITIES = ['address','signTransaction','signMessage','call','submit','log_subscription','log_history','legacy'] as const
 	export interface CapabilitiesChanged extends BaseNotification {
 		readonly kind: 'capabilities_changed'
 		readonly type: 'notification'
@@ -417,7 +447,7 @@ export namespace HotOstrich {
 		}
 	}
 
-	export type Message = GetCapabilities.Message | SubmitNativeTokenTransfer.Message | SubmitContractCall.Message | SubmitContractDeployment.Message | SignMessage.Message | GetAddress.Message | GetBalance.Message | LocalContractCall.Message | WalletAddressChanged | CapabilitiesChanged
+	export type Message = GetCapabilities.Message | SubmitNativeTokenTransfer.Message | SubmitContractCall.Message | SubmitContractDeployment.Message | SignMessage.Message | GetAddress.Message | GetBalance.Message | LocalContractCall.Message | LegacyJsonRpc.Message | WalletAddressChanged | CapabilitiesChanged
 	export type ClientMessage = Extract<Message, BaseRequest | BaseBroadcast>
 	export type ProviderMessage = Extract<Message, BaseResponse | BaseNotification>
 	export type ClientBroadcast = Extract<ClientMessage, BaseBroadcast>
