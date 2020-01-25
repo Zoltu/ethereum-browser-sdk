@@ -34,7 +34,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 	}
 
 	// for submitting transactions/queries only (e.g., getBalance), for anything that requires an account or signing, go through the wallet
-	private jsonRpc: JsonRpc = new FetchJsonRpc(this.jsonRpcEndpoint, this.fetch, this.getGasPrice)
+	private jsonRpc: JsonRpc = new FetchJsonRpc(this.jsonRpcEndpoint, this.fetch, { gasPriceInAttoethProvider: this.getGasPrice })
 
 	public readonly onError: provider.HotOstrichHandler['onError'] = error => {
 		this.errorHandler.noticeError(error)

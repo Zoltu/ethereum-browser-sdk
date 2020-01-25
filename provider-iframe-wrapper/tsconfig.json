@@ -15,7 +15,7 @@
 		"noImplicitReturns": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
-		"lib": [ "dom", "esnext" ],
+		"lib": [ "dom", "esnext", "es2018.promise" ],
 		"allowUmdGlobalAccess": true,
 		"experimentalDecorators": true,
 	},

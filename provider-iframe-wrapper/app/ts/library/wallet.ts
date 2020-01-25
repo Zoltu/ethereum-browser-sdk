@@ -14,7 +14,7 @@ export class ViewingWallet {
 		getGasPrice: () => Promise<bigint>,
 		public readonly address: bigint,
 	) {
-		this.jsonRpc = new FetchJsonRpc(jsonRpcEndpoint, fetch, getGasPrice, async () => address)
+		this.jsonRpc = new FetchJsonRpc(jsonRpcEndpoint, fetch, { gasPriceInAttoethProvider: getGasPrice, addressProvider: async () => address })
 	}
 
 	public readonly localContractCall: provider.HotOstrichHandler['localContractCall'] = async request => {
@@ -41,7 +41,7 @@ export class MnemonicWallet {
 		public readonly address: bigint,
 		private readonly privateKey: bigint,
 	) {
-		this.jsonRpc = new FetchJsonRpc(jsonRpcEndpoint, fetch, getGasPrice, async () => address, this.sign)
+		this.jsonRpc = new FetchJsonRpc(jsonRpcEndpoint, fetch, { gasPriceInAttoethProvider: getGasPrice, addressProvider: async () => address, signatureProvider: this.sign })
 	}
 	public static async create(jsonRpcEndpoint: string, fetch: Window['fetch'], getGasPrice: () => Promise<bigint>, mnemonicWords: string[]): Promise<MnemonicWallet> {
 		const seed = await mnemonic.toSeed(mnemonicWords)
@@ -129,7 +129,7 @@ export class LedgerWallet {
 		getGasPrice: () => Promise<bigint>,
 		public readonly address: bigint,
 	) {
-		this.jsonRpc = new FetchJsonRpc(jsonRpcEndpoint, fetch, getGasPrice, async () => address, this.sign)
+		this.jsonRpc = new FetchJsonRpc(jsonRpcEndpoint, fetch, { gasPriceInAttoethProvider: getGasPrice, addressProvider: async () => address, signatureProvider: this.sign })
 	}
 	public static async create(jsonRpcEndpoint: string, fetch: Window['fetch'], getGasPrice: () => Promise<bigint>): Promise<LedgerWallet> {
 		const address = await getAddress()
