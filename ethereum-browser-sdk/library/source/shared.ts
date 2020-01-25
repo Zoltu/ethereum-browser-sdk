@@ -66,6 +66,8 @@ export namespace Handshake {
 			readonly friendly_name: string
 			/** base64 encoded png for an icon to present to the user */
 			readonly friendly_icon: string
+			/** the name of the blockchain that this provider is connected to; cribbed from https://chainid.network/ */
+			readonly chain_name: 'Ethereum Mainnet' | 'xDAI Chain' | 'EtherInc' | 'ThunderCore Mainnet' | 'Metadium Mainnet' | 'IPOS Network' | 'Metadium Testnet' | 'Ether-1' | 'Xerom' | 'PepChain Churchill' | 'Lightstreams Testnet' | 'Atheios' | 'Lightstreams Mainnet' | 'ThunderCore Testnet' | 'IOLite' | 'Teslafunds' | 'EtherGem' | 'Expanse Network' | 'Akaroma' | 'Webchain' | 'ARTIS sigma1' | 'ARTIS tau1' | 'High Performance Blockchain' | 'Auxilium Network Mainnet' | 'Ethereum Testnet Ropsten' | 'RSK Mainnet' | 'RSK Testnet' | 'Ethersocial Network' | 'Pirl' | 'Lisinski' | 'Ethereum Testnet Rinkeby' | 'Ethereum Testnet Kovan' | 'Athereum' | 'Ethereum Testnet Görli' | 'Ethereum Classic Testnet Kotti' | 'GoChain' | 'Ethereum Classic Mainnet' | 'Aquachain' | 'Ethereum Classic Testnet' | 'Ellaism' | 'Mix' | 'POA Network Sokol' | 'Musicoin' | 'Ubiq Network Mainnet' | 'Callisto Mainnet' | 'Callisto Testnet' | 'TomoChain' | 'Ubiq Network Testnet' | 'Nepal Blockchain Network' | 'POA Network Core' | 'Private'
 		}
 	}
 

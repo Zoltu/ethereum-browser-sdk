@@ -15,7 +15,8 @@ export class HandshakeHandler implements provider.HandshakeHandler {
 			friendly_icon: 'iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==',
 			friendly_name: 'My iFrame Provider 😸',
 			provider_id: 'my-iframe-provider',
-			supported_protocols: provider.HotOstrichChannel.supportedProtocols
+			supported_protocols: provider.HotOstrichChannel.supportedProtocols,
+			chain_name: 'Ethereum Mainnet',
 		}
 	}
 }
