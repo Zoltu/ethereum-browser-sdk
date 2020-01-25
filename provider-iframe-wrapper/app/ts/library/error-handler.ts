@@ -14,3 +14,10 @@ export class ErrorHandler {
 		return (...args: P) => asyncFunction(...args).catch(this.noticeError)
 	}
 }
+
+export class JsonRpcError extends Error {
+	constructor(public readonly code: number, message: string, public readonly data?: object) {
+		super(message)
+		this.name = this.constructor.name
+	}
+}
