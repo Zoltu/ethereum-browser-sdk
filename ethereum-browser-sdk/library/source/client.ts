@@ -197,7 +197,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 
 	private readonly onHotOstrichResponse = (response: HotOstrich.ProviderResponse): void => {
 		const pendingRequest = this.pendingRequests.find(pendingRequest => pendingRequest.correlationId === response.correlation_id)
-		if (pendingRequest === undefined) throw new Error(`Received a response without finding a matching request.  Maybe it already timed out?  ${JSON.stringify(response)}`)
+		if (pendingRequest === undefined) throw new Error(`Received a response without finding a matching request.  Maybe it already timed out?  ${JSON.stringify(response, (_key, value) => typeof value === 'bigint' ? `0x${value.toString(16)}` : value)}`)
 		// TODO: `response` should be treated as untrusted user input and validate before resolving the promise with it.  If it doesn't match expectations then we should reject with an appropriate error rather than pushing the problem downstream
 		const future = (pendingRequest.future as Future<typeof response.payload>)
 		if (response.success) {

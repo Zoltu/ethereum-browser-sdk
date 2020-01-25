@@ -1,4 +1,4 @@
-import { MessageEnvelope, Message, ClientMessage, EthereumEnvelope, ProviderMessage, Handshake, HotOstrich } from "./shared"
+import { MessageEnvelope, Message, ClientMessage, EthereumEnvelope, ProviderMessage, Handshake, HotOstrich, BaseFailureResponse } from "./shared"
 import { EthereumMessageEvent } from "./client"
 import { assertNever } from "./utils"
 
@@ -197,16 +197,18 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 			// cast is unfortunately necessary since even though we know that message.kind and payload will align (due to ternary above, the compiler doesn't track type dependencies)
 			} as Extract<HotOstrich.ProviderResponse, {payload:typeof payload}>)
 		} catch (error) {
-			this.send({
+			const errorMessage = {
 				type: 'response',
 				kind: message.kind,
 				correlation_id: message.correlation_id,
 				success: false,
 				payload: {
 					message: (typeof error === 'object' && 'message' in error) ? error.message : 'Unknown error occurred while processing request.',
-					data: JSON.stringify(error),
+					data: (typeof error === 'object' && 'data' in error) ? error.data : JSON.stringify(error),
+					code: (typeof error === 'object' && 'code' in error) ? error.code : undefined,
 				},
-			})
+			} as Extract<HotOstrich.ProviderResponse, BaseFailureResponse>
+			this.send(errorMessage)
 		}
 	}
 
