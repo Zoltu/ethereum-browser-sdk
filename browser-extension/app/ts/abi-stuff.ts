@@ -1,6 +1,5 @@
 import { shared } from '@zoltu/ethereum-browser-sdk'
 import { Encodable, EncodableTuple, parseSignature, encodeParameters } from '@zoltu/ethereum-abi-encoder'
-import { ethereum } from '@zoltu/ethereum-crypto'
 
 // https://github.com/Microsoft/TypeScript/issues/17002
 declare global {
@@ -35,6 +34,6 @@ function contractParameterToEncodable(contractParameter: shared.ContractParamete
 	}
 }
 
-export async function bigintToAddressString(value: bigint): Promise<string> {
-	return await ethereum.addressToChecksummedString(value)
+export function bigintToHexString(value: bigint): string {
+	return `0x${value.toString(16).padStart(40, '0')}`
 }

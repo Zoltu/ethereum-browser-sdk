@@ -1,4 +1,4 @@
-import { MessageEnvelope, Message, ClientMessage, EthereumEnvelope, ProviderMessage, Handshake, HotOstrich } from "./shared"
+import { MessageEnvelope, Message, ClientMessage, EthereumEnvelope, ProviderMessage, Handshake, HotOstrich, BaseFailureResponse } from "./shared"
 import { EthereumMessageEvent } from "./client"
 import { assertNever } from "./utils"
 
@@ -109,6 +109,7 @@ export interface HotOstrichHandler {
 	readonly submitContractCall: (request: HotOstrich.SubmitContractCall.Request['payload']) => Promise<HotOstrich.SubmitContractCall.SuccessResponse['payload']>
 	readonly submitContractDeployment: (request: HotOstrich.SubmitContractDeployment.Request['payload']) => Promise<HotOstrich.SubmitContractDeployment.SuccessResponse['payload']>
 	readonly submitNativeTokenTransfer: (request: HotOstrich.SubmitNativeTokenTransfer.Request['payload']) => Promise<HotOstrich.SubmitNativeTokenTransfer.SuccessResponse['payload']>
+	readonly legacyJsonrpc: (method: HotOstrich.LegacyJsonRpc.Request['payload']['method'], parameters: HotOstrich.LegacyJsonRpc.Request['payload']['parameters']) => Promise<HotOstrich.LegacyJsonRpc.SuccessResponse['payload']['result']>
 }
 
 export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
@@ -187,6 +188,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 				: (message.kind === 'submit_contract_deployment') ? await this.onSubmitContractDeployment(message.payload)
 				: (message.kind === 'submit_native_token_transfer') ? await this.onSubmitNativeTokenTransfer(message.payload)
 				: (message.kind === 'get_balance') ? await this.onGetBalance(message.payload)
+				: (message.kind === 'legacy_jsonrpc') ? await this.onLegacyJsonrpc(message.payload)
 				: assertNever(message)
 			this.send({
 				type: 'response',
@@ -197,16 +199,18 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 			// cast is unfortunately necessary since even though we know that message.kind and payload will align (due to ternary above, the compiler doesn't track type dependencies)
 			} as Extract<HotOstrich.ProviderResponse, {payload:typeof payload}>)
 		} catch (error) {
-			this.send({
+			const errorMessage = {
 				type: 'response',
 				kind: message.kind,
 				correlation_id: message.correlation_id,
 				success: false,
 				payload: {
 					message: (typeof error === 'object' && 'message' in error) ? error.message : 'Unknown error occurred while processing request.',
-					data: JSON.stringify(error),
+					data: (typeof error === 'object' && 'data' in error) ? error.data : JSON.stringify(error),
+					code: (typeof error === 'object' && 'code' in error) ? error.code : undefined,
 				},
-			})
+			} as Extract<HotOstrich.ProviderResponse, BaseFailureResponse>
+			this.send(errorMessage)
 		}
 	}
 
@@ -242,6 +246,10 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 
 	private readonly onSubmitNativeTokenTransfer = async (requestPayload: HotOstrich.SubmitNativeTokenTransfer.Request['payload']): Promise<HotOstrich.SubmitNativeTokenTransfer.SuccessResponse['payload']> => {
 		return await this.hotOstrichHandler.submitNativeTokenTransfer(requestPayload)
+	}
+
+	private readonly onLegacyJsonrpc = async (requestPayload: HotOstrich.LegacyJsonRpc.Request['payload']): Promise<HotOstrich.LegacyJsonRpc.SuccessResponse['payload']> => {
+		return { result: await this.hotOstrichHandler.legacyJsonrpc(requestPayload.method, requestPayload.parameters) }
 	}
 }
 

@@ -5,20 +5,20 @@ import { FetchJsonRpc } from '@zoltu/ethereum-fetch-json-rpc'
 import { JsonRpc, JsonRpcMethod } from '@zoltu/ethereum-types'
 import { ErrorHandler, JsonRpcError } from './error-handler'
 import { Wallet } from './wallet'
-import { contractParametersToEncodables, bigintToAddressString } from './abi-stuff'
+import { contractParametersToEncodables, bigintToHexString } from './abi-stuff'
 
 export class HotOstrichChannel implements provider.HotOstrichHandler {
 	private readonly hotOstrichChannel: provider.HotOstrichChannel
 	public constructor(
 		private readonly errorHandler: ErrorHandler,
 		private readonly fetch: Window['fetch'],
-		thisWindow: Window,
-		childWindow: Window,
+		thisWindow: ConstructorParameters<typeof provider.HotOstrichChannel>[0],
+		childWindow: ConstructorParameters<typeof provider.HotOstrichChannel>[1],
 		private readonly jsonRpcEndpoint: string,
 		private readonly getGasPrice: () => Promise<bigint>
 	) {
 		// CONSIDER: this is a bit sketchy, if the channel constructor makes any calls to the the handler during construction they will fail because we aren't done constructing `this` yet
-		this.hotOstrichChannel = new provider.HotOstrichChannel(thisWindow, childWindow, 'my-iframe-provider', this)
+		this.hotOstrichChannel = new provider.HotOstrichChannel(thisWindow, childWindow, 'my-extension-provider', this)
 		this.hotOstrichChannel.updateCapabilities({ 'call': true, 'submit': true })
 	}
 
@@ -30,7 +30,8 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 		this.hotOstrichChannel.walletAddress = (this.wallet === undefined) ? undefined : this.wallet.address
 		const canSignMessage = this.wallet && 'signMessage' in this.wallet
 		const canSignTransaction = this.wallet && 'submitContractCall' in this.wallet
-		this.hotOstrichChannel.updateCapabilities({ signMessage: canSignMessage, signTransaction: canSignTransaction })
+		const supportsLegacy = this.wallet && 'legacyJsonrpc' in this.wallet
+		this.hotOstrichChannel.updateCapabilities({ signMessage: canSignMessage, signTransaction: canSignTransaction, legacy: supportsLegacy })
 	}
 
 	// for submitting transactions/queries only (e.g., getBalance), for anything that requires an account or signing, go through the wallet
@@ -86,80 +87,32 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 
 	public readonly legacyJsonrpc: provider.HotOstrichHandler['legacyJsonrpc'] = async (method, parameters) => {
 		switch (method) {
-			case 'eth_gasPrice': return await bigintToAddressString(await this.getGasPrice())
-			case 'eth_blockNumber':
-			case 'eth_chainId':
-			case 'eth_getBalance':
-			case 'eth_getBlockByHash':
-			case 'eth_getBlockByNumber':
-			case 'eth_getBlockTransactionCountByHash':
-			case 'eth_getBlockTransactionCountByNumber':
-			case 'eth_getCode':
-			case 'eth_getFilterChanges':
-			case 'eth_getFilterLogs':
-			case 'eth_getLogs':
-			case 'eth_getStorageAt':
-			case 'eth_getTransactionByBlockHashAndIndex':
-			case 'eth_getTransactionByBlockNumberAndIndex':
-			case 'eth_getTransactionByHash':
-			case 'eth_getTransactionCount':
-			case 'eth_getTransactionReceipt':
-			case 'eth_getUncleByBlockHashAndIndex':
-			case 'eth_getUncleByBlockNumberAndIndex':
-			case 'eth_getUncleCountByBlockHash':
-			case 'eth_getUncleCountByBlockNumber':
-			case 'eth_getWork':
-			case 'eth_hashrate':
-			case 'eth_mining':
-			case 'eth_newBlockFilter':
-			case 'eth_newFilter':
-			case 'eth_newPendingTransactionFilter':
-			case 'eth_protocolVersion':
-			case 'eth_sendRawTransaction':
-			case 'eth_sign':
-			case 'eth_submitHashrate':
-			case 'eth_submitWork':
-			case 'eth_syncing':
-			case 'eth_uninstallFilter': {
-				return await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method as JsonRpcMethod, parameters: parameters })
+			case 'eth_gasPrice': {
+				return bigintToHexString(await this.getGasPrice())
+			}
+			case 'eth_coinbase': {
+				return this.wallet === undefined
+					? null
+					: bigintToHexString(this.wallet.address)
+			}
+			case 'eth_accounts': {
+				return this.wallet === undefined
+					? []
+					: [bigintToHexString(this.wallet.address)]
+			}
+			case 'eth_estimateGas':
+			case 'eth_call': {
+				return this.wallet === undefined
+					? (await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method as JsonRpcMethod, params: parameters })).result
+					: await this.wallet.legacyJsonrpc(method, parameters)
+			}
+			case 'eth_sendTransaction':
+			case 'eth_signTransaction': {
+				if (this.wallet === undefined) throw new JsonRpcError(-32601, `Cannot call ${method} without choosing a wallet.`)
+				else return await this.wallet.legacyJsonrpc(method, parameters)
 			}
 			default: {
-				if (this.wallet === undefined) {
-					switch (method) {
-						case 'eth_coinbase': return null
-						case 'eth_accounts': return []
-
-						case 'eth_estimateGas':
-						case 'eth_call': {
-							return await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method as JsonRpcMethod, parameters: parameters })
-						}
-
-						case 'eth_sendTransaction':
-						case 'eth_signTransaction': {
-							throw new JsonRpcError(-32601, `Cannot call ${method} without choosing a wallet.`)
-						}
-
-						default: throw new JsonRpcError(-32601, `Unknown JSONRPC method: ${method}.`)
-					}
-				} else {
-					switch (method) {
-						case 'eth_coinbase': return await bigintToAddressString(this.wallet.address)
-						case 'eth_accounts': return [await bigintToAddressString(this.wallet.address)]
-
-						case 'eth_call':
-						case 'eth_estimateGas':
-						case 'eth_sendTransaction':
-						case 'eth_signTransaction': {
-							return await this.wallet.legacyJsonrpc(method, parameters)
-						}
-					}
-				}
-			}
-		}
-		if (this.wallet === undefined) {
-			switch (method) {
-
-
+				return (await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method as JsonRpcMethod, params: parameters })).result
 			}
 		}
 	}

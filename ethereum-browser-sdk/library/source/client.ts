@@ -157,6 +157,8 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 
 	public readonly localContractCall = async (payload: HotOstrich.LocalContractCall.Request['payload']): Promise<HotOstrich.LocalContractCall.SuccessResponse['payload']['result']> => (await this.promisify<HotOstrich.LocalContractCall.Request, HotOstrich.LocalContractCall.SuccessResponse>('local_contract_call', payload)).result
 
+	public readonly legacyJsonrpc = async (payload: HotOstrich.LegacyJsonRpc.Request['payload']): Promise<HotOstrich.LegacyJsonRpc.SuccessResponse['payload']> => (await this.promisify<HotOstrich.LegacyJsonRpc.Request, HotOstrich.LegacyJsonRpc.SuccessResponse>('legacy_jsonrpc', payload))
+
 	// private because we manage capabilities for the user and expose it in .capabilities
 	private readonly getCapabilities = async () => await this.promisify<HotOstrich.GetCapabilities.Request, HotOstrich.GetCapabilities.SuccessResponse>('get_capabilities', {})
 	// private because we manage wallet address for the user and expose it in .walletAddress
@@ -197,7 +199,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 
 	private readonly onHotOstrichResponse = (response: HotOstrich.ProviderResponse): void => {
 		const pendingRequest = this.pendingRequests.find(pendingRequest => pendingRequest.correlationId === response.correlation_id)
-		if (pendingRequest === undefined) throw new Error(`Received a response without finding a matching request.  Maybe it already timed out?  ${JSON.stringify(response)}`)
+		if (pendingRequest === undefined) throw new Error(`Received a response without finding a matching request.  Maybe it already timed out?  ${JSON.stringify(response, (_key, value) => typeof value === 'bigint' ? `0x${value.toString(16)}` : value)}`)
 		// TODO: `response` should be treated as untrusted user input and validate before resolving the promise with it.  If it doesn't match expectations then we should reject with an appropriate error rather than pushing the problem downstream
 		const future = (pendingRequest.future as Future<typeof response.payload>)
 		if (response.success) {

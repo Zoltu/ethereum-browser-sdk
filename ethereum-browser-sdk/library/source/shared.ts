@@ -66,6 +66,8 @@ export namespace Handshake {
 			readonly friendly_name: string
 			/** base64 encoded png for an icon to present to the user */
 			readonly friendly_icon: string
+			/** the name of the blockchain that this provider is connected to; cribbed from https://chainid.network/ */
+			readonly chain_name: 'Ethereum Mainnet' | 'xDAI Chain' | 'EtherInc' | 'ThunderCore Mainnet' | 'Metadium Mainnet' | 'IPOS Network' | 'Metadium Testnet' | 'Ether-1' | 'Xerom' | 'PepChain Churchill' | 'Lightstreams Testnet' | 'Atheios' | 'Lightstreams Mainnet' | 'ThunderCore Testnet' | 'IOLite' | 'Teslafunds' | 'EtherGem' | 'Expanse Network' | 'Akaroma' | 'Webchain' | 'ARTIS sigma1' | 'ARTIS tau1' | 'High Performance Blockchain' | 'Auxilium Network Mainnet' | 'Ethereum Testnet Ropsten' | 'RSK Mainnet' | 'RSK Testnet' | 'Ethersocial Network' | 'Pirl' | 'Lisinski' | 'Ethereum Testnet Rinkeby' | 'Ethereum Testnet Kovan' | 'Athereum' | 'Ethereum Testnet Görli' | 'Ethereum Classic Testnet Kotti' | 'GoChain' | 'Ethereum Classic Mainnet' | 'Aquachain' | 'Ethereum Classic Testnet' | 'Ellaism' | 'Mix' | 'POA Network Sokol' | 'Musicoin' | 'Ubiq Network Mainnet' | 'Callisto Mainnet' | 'Callisto Testnet' | 'TomoChain' | 'Ubiq Network Testnet' | 'Nepal Blockchain Network' | 'POA Network Core' | 'Private'
 		}
 	}
 
@@ -112,8 +114,8 @@ export namespace HotOstrich {
 			readonly kind: 'get_capabilities'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -152,8 +154,8 @@ export namespace HotOstrich {
 			readonly kind: 'submit_native_token_transfer'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -197,8 +199,8 @@ export namespace HotOstrich {
 			readonly kind: 'submit_contract_call'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -239,8 +241,8 @@ export namespace HotOstrich {
 			readonly kind: 'submit_contract_deployment'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -281,8 +283,8 @@ export namespace HotOstrich {
 			readonly kind: 'sign_message'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -305,8 +307,8 @@ export namespace HotOstrich {
 			readonly kind: 'get_wallet_address'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -319,7 +321,7 @@ export namespace HotOstrich {
 			readonly kind: 'get_balance'
 			readonly type: 'request'
 			readonly payload: {
-				address: bigint
+				readonly address: bigint
 			}
 		}
 		export interface SuccessResponse extends Kind, BaseSuccessResponse {
@@ -327,7 +329,7 @@ export namespace HotOstrich {
 			readonly type: 'response'
 			readonly success: true
 			readonly payload: {
-				balance: bigint
+				readonly balance: bigint
 			}
 		}
 		export interface FailureResponse extends Kind, BaseFailureResponse {
@@ -376,8 +378,8 @@ export namespace HotOstrich {
 			readonly kind: 'local_contract_call'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -400,6 +402,36 @@ export namespace HotOstrich {
 	// 	// CONSIDER: is this necessary?  why do people want to fetch a block for a dapp?  what information do they _really_ want?  What information do end-users care about?
 	// }
 
+	export namespace LegacyJsonRpc {
+		interface Kind extends BaseMessage { readonly kind: 'legacy_jsonrpc' }
+		export interface Request extends Kind, BaseRequest {
+			readonly kind: 'legacy_jsonrpc'
+			readonly type: 'request'
+			readonly payload: {
+				readonly method: string
+				readonly parameters: unknown[]
+			}
+		}
+		export interface SuccessResponse extends Kind, BaseSuccessResponse {
+			readonly kind: 'legacy_jsonrpc'
+			readonly type: 'response'
+			readonly payload: {
+				readonly result: unknown
+			}
+		}
+		export interface FailureResponse extends Kind, BaseFailureResponse {
+			readonly kind: 'legacy_jsonrpc'
+			readonly type: 'response'
+			readonly payload: {
+				readonly message: string
+				readonly data: unknown
+				readonly code?: number
+			}
+		}
+		export type Response = SuccessResponse | FailureResponse
+		export type Message = Request | Response
+	}
+
 	export interface WalletAddressChanged extends BaseNotification {
 		readonly kind: 'wallet_address_changed'
 		readonly type: 'notification'
@@ -408,7 +440,7 @@ export namespace HotOstrich {
 		}
 	}
 
-	export const ALL_CAPABILITIES = ['address','signTransaction','signMessage','call','submit','log_subscription','log_history'] as const
+	export const ALL_CAPABILITIES = ['address','signTransaction','signMessage','call','submit','log_subscription','log_history','legacy'] as const
 	export interface CapabilitiesChanged extends BaseNotification {
 		readonly kind: 'capabilities_changed'
 		readonly type: 'notification'
@@ -417,7 +449,7 @@ export namespace HotOstrich {
 		}
 	}
 
-	export type Message = GetCapabilities.Message | SubmitNativeTokenTransfer.Message | SubmitContractCall.Message | SubmitContractDeployment.Message | SignMessage.Message | GetAddress.Message | GetBalance.Message | LocalContractCall.Message | WalletAddressChanged | CapabilitiesChanged
+	export type Message = GetCapabilities.Message | SubmitNativeTokenTransfer.Message | SubmitContractCall.Message | SubmitContractDeployment.Message | SignMessage.Message | GetAddress.Message | GetBalance.Message | LocalContractCall.Message | LegacyJsonRpc.Message | WalletAddressChanged | CapabilitiesChanged
 	export type ClientMessage = Extract<Message, BaseRequest | BaseBroadcast>
 	export type ProviderMessage = Extract<Message, BaseResponse | BaseNotification>
 	export type ClientBroadcast = Extract<ClientMessage, BaseBroadcast>

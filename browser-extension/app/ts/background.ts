@@ -1,4 +1,7 @@
 import { provider } from '@zoltu/ethereum-browser-sdk'
+import { HotOstrichChannel } from './hot-ostrich-channel'
+import { ErrorHandler } from './error-handler'
+import { LedgerWallet, RecoverableWallet } from './wallet'
 
 // user clicked the navbar icon
 browser.browserAction.onClicked.addListener(tab => contentInjector(tab).catch(console.error))
@@ -8,12 +11,18 @@ async function contentInjector(tab: browser.tabs.Tab): Promise<void> {
 	if (tab.id === undefined) return
 	await browser.tabs.executeScript(tab.id, { file: '/vendor/webextension-polyfill/browser-polyfill.js'})
 	await browser.tabs.executeScript(tab.id, { file: '/js/content.js' })
+	await browser.tabs.executeScript(tab.id, { file: '/js/legacy-injector.js' })
+	// TODO: add a GUI to the extension that shows up on click (as well as injecting the content script) that lets the user inject the legacy provider optionally (rather than forcing it in)
 }
 
 async function onContentScriptConnected(port: browser.runtime.Port): Promise<void> {
 	const addEventListener = (_: 'message', listener: (payload: any) => void) => port.onMessage.addListener(listener)
 	const removeEventListener = (_: 'message', listener: (payload: any) => void) => port.onMessage.removeListener(listener)
 	const postMessage = (message: any, _: string) =>  port.postMessage(message)
+
+	const errorHandler = new ErrorHandler()
+	const jsonRpcEndpoint = 'https://parity.zoltu.io/' as const
+	const getGasPrice = async () => 1n
 
 	new provider.HandshakeChannel({addEventListener, removeEventListener}, {postMessage}, {
 		onError: console.error,
@@ -22,17 +31,11 @@ async function onContentScriptConnected(port: browser.runtime.Port): Promise<voi
 			friendly_name: 'My Extension Provider 😎',
 			provider_id: 'my-extension-provider',
 			supported_protocols: [ ...provider.HotOstrichChannel.supportedProtocols ],
+			chain_name: 'Ethereum Mainnet',
 		})
 	})
-	const hotOstrichChannel = new provider.HotOstrichChannel({addEventListener, removeEventListener}, {postMessage}, 'my-extension-provider', {
-		onError: console.error,
-		getBalance: async () => { throw new Error(`Not implemented yet.`)},
-		localContractCall: async () => { throw new Error(`Not implemented yet.`) },
-		signMessage: async () => { throw new Error(`Not implemented yet.`) },
-		submitContractCall: async () => { throw new Error(`Not implemented yet.`) },
-		submitContractDeployment: async () => { throw new Error(`Not implemented yet.`) },
-		submitNativeTokenTransfer: async () => { throw new Error(`Not implemented yet.`) },
-	})
-	hotOstrichChannel.walletAddress = 0n
-	hotOstrichChannel.updateCapabilities({call:true,submit:true})
+	const hotOstrichChannel = new HotOstrichChannel(errorHandler, fetch.bind(window), {addEventListener, removeEventListener}, {postMessage}, jsonRpcEndpoint, getGasPrice)
+	const ledgerWallet = await LedgerWallet.create(jsonRpcEndpoint, fetch.bind(window), getGasPrice)
+	const recoverableWallet = new RecoverableWallet(ledgerWallet, 0x25dde46EC77A801ac887e7D1764B0c8913328348n)
+	hotOstrichChannel.updateWallet(recoverableWallet)
 }

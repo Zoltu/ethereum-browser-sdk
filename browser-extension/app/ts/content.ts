@@ -3,8 +3,8 @@
  * this script serves as a _very thin_ proxy between the page scripts (dapp) and the extension, simply forwarding messages between the two
 */
 
-if (!(window as any).recoverableWalletInjected) {
-	(window as any).recoverableWalletInjected = true
+if (!(window as any).extensionProviderInjected) {
+	(window as any).extensionProviderInjected = true
 
 	// the content script is a very thin proxy between the background script and the page script
 	const extensionPort = browser.runtime.connect()

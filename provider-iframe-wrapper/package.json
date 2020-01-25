@@ -5,10 +5,10 @@
 	"dependencies": {
 		"@zoltu/ethereum-abi-encoder": "3.2.2",
 		"@zoltu/ethereum-browser-sdk": "file:../ethereum-browser-sdk/library",
-		"@zoltu/ethereum-crypto": "2.0.0",
-		"@zoltu/ethereum-fetch-json-rpc": "10.0.0",
+		"@zoltu/ethereum-crypto": "2.1.1",
+		"@zoltu/ethereum-fetch-json-rpc": "11.0.1",
 		"@zoltu/ethereum-ledger": "3.0.0",
-		"@zoltu/ethereum-types": "8.0.0",
+		"@zoltu/ethereum-types": "8.3.1",
 		"@zoltu/recoverable-wallet-library": "file:../../recoverable-wallet/contracts",
 		"@zoltu/rlp-encoder": "1.0.2",
 		"es-module-shims": "0.4.5",
