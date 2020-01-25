@@ -112,8 +112,8 @@ export namespace HotOstrich {
 			readonly kind: 'get_capabilities'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -152,8 +152,8 @@ export namespace HotOstrich {
 			readonly kind: 'submit_native_token_transfer'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -197,8 +197,8 @@ export namespace HotOstrich {
 			readonly kind: 'submit_contract_call'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -239,8 +239,8 @@ export namespace HotOstrich {
 			readonly kind: 'submit_contract_deployment'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -281,8 +281,8 @@ export namespace HotOstrich {
 			readonly kind: 'sign_message'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -305,8 +305,8 @@ export namespace HotOstrich {
 			readonly kind: 'get_wallet_address'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
@@ -319,7 +319,7 @@ export namespace HotOstrich {
 			readonly kind: 'get_balance'
 			readonly type: 'request'
 			readonly payload: {
-				address: bigint
+				readonly address: bigint
 			}
 		}
 		export interface SuccessResponse extends Kind, BaseSuccessResponse {
@@ -327,7 +327,7 @@ export namespace HotOstrich {
 			readonly type: 'response'
 			readonly success: true
 			readonly payload: {
-				balance: bigint
+				readonly balance: bigint
 			}
 		}
 		export interface FailureResponse extends Kind, BaseFailureResponse {
@@ -376,8 +376,8 @@ export namespace HotOstrich {
 			readonly kind: 'local_contract_call'
 			readonly type: 'response'
 			readonly payload: {
-				message: string
-				data: string
+				readonly message: string
+				readonly data: string
 			}
 		}
 		export type Response = SuccessResponse | FailureResponse
