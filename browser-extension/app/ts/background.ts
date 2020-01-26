@@ -1,7 +1,7 @@
 import { provider } from '@zoltu/ethereum-browser-sdk'
 import { HotOstrichChannel } from './hot-ostrich-channel'
 import { ErrorHandler } from './error-handler'
-import { LedgerWallet, RecoverableWallet } from './wallet'
+import { MnemonicWallet } from './wallet'
 
 // user clicked the navbar icon
 browser.browserAction.onClicked.addListener(tab => contentInjector(tab).catch(console.error))
@@ -35,7 +35,6 @@ async function onContentScriptConnected(port: browser.runtime.Port): Promise<voi
 		})
 	})
 	const hotOstrichChannel = new HotOstrichChannel(errorHandler, fetch.bind(window), {addEventListener, removeEventListener}, {postMessage}, jsonRpcEndpoint, getGasPrice)
-	const ledgerWallet = await LedgerWallet.create(jsonRpcEndpoint, fetch.bind(window), getGasPrice)
-	const recoverableWallet = new RecoverableWallet(ledgerWallet, 0x25dde46EC77A801ac887e7D1764B0c8913328348n)
-	hotOstrichChannel.updateWallet(recoverableWallet)
+	const mnemonicWallet = await MnemonicWallet.create(jsonRpcEndpoint, fetch.bind(window), getGasPrice, ['zoo', 'zoo', 'zoo', 'zoo', 'zoo', 'zoo', 'zoo', 'zoo', 'zoo', 'zoo', 'zoo', 'wrong'])
+	hotOstrichChannel.updateWallet(mnemonicWallet)
 }
