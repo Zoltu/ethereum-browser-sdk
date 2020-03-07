@@ -1,11 +1,12 @@
 import { ErrorHandler } from '../library/error-handler'
-import { decimalStringToBigintEth, hexStringToBigint } from '../library/utils'
+import { decimalStringToBigint, hexStringToBigint } from '../library/utils'
 
 interface SendTokenModel {
 	readonly errorHandler: ErrorHandler
 	readonly onSendToken: (token: bigint, amount: bigint, destination: bigint) => Promise<void>
 	readonly symbol: string
 	readonly address: bigint
+	readonly decimals: bigint
 }
 export const SendToken = (model: SendTokenModel) => {
 	const [amountString, setAmountString] = React.useState('')
@@ -23,7 +24,7 @@ export const SendToken = (model: SendTokenModel) => {
 		setSending(true)
 		try {
 			// we can only reach this code if `validate` passes, so we know that at this point both of these values will match the expected form
-			const amount = decimalStringToBigintEth(amountString)!
+			const amount = decimalStringToBigint(amountString, model.decimals)!
 			const destination = hexStringToBigint(destinationString)!
 			await model.onSendToken(model.address, amount, destination)
 		} finally {
@@ -49,8 +50,9 @@ interface SendTokensModel {
 	readonly tokens: readonly {
 		symbol: string
 		address: bigint
+		decimals: bigint
 	}[]
 }
 export const SendTokens = (model: SendTokensModel) => <>
-	{model.tokens.map(token => <SendToken key={token.symbol} errorHandler={model.errorHandler} onSendToken={model.onSendToken} symbol={token.symbol} address={token.address}/>)}
+	{model.tokens.map(token => <SendToken key={token.symbol} errorHandler={model.errorHandler} onSendToken={model.onSendToken} symbol={token.symbol} address={token.address} decimals={token.decimals} />)}
 </>

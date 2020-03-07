@@ -6,7 +6,7 @@ interface AssetManagerModel {
 	readonly errorHandler: ErrorHandler
 	readonly onSendEth: (amount: bigint, destination: bigint) => Promise<void>
 	readonly onSendToken: (token: bigint, amount: bigint, destination: bigint) => Promise<void>
-	readonly tokens: readonly { symbol: string, address: bigint }[]
+	readonly tokens: readonly { symbol: string, address: bigint, decimals: bigint }[]
 }
 
 export const AssetManager = (model: AssetManagerModel) => {

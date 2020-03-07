@@ -13,9 +13,9 @@ function render() {
 
 const errorHandler = new ErrorHandler()
 const fetch = window.fetch.bind(window)
-// const jsonRpcEndpoint = 'https://parity.zoltu.io/' as const
-const jsonRpcEndpoint = 'http://127.0.0.1:1235/' as const
-const getGasPrice = async (): Promise<bigint> => 2n*10n**9n
+const jsonRpcEndpoint = 'https://ethereum.zoltu.io/' as const
+// const jsonRpcEndpoint = 'http://127.0.0.1:1235/' as const
+const getGasPrice = async (): Promise<bigint> => 1n*10n**9n
 
 let handshakeChannel: provider.HandshakeChannel | undefined = undefined
 let hotOstrichChannel: HotOstrichChannel | undefined = undefined
