@@ -441,11 +441,12 @@ export namespace HotOstrich {
 	}
 
 	export const ALL_CAPABILITIES = ['address','signTransaction','signMessage','call','submit','log_subscription','log_history','legacy'] as const
+	export type Capability = (typeof ALL_CAPABILITIES)[number]
 	export interface CapabilitiesChanged extends BaseNotification {
 		readonly kind: 'capabilities_changed'
 		readonly type: 'notification'
 		readonly payload: {
-			readonly capabilities: ReadonlySet<(typeof ALL_CAPABILITIES)[number]>
+			readonly capabilities: ReadonlyArray<Capability>
 		}
 	}
 

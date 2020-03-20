@@ -115,7 +115,7 @@ export interface HotOstrichHandler {
 export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 	public static readonly supportedProtocols = [{ name: HotOstrich.KIND, version: HotOstrich.VERSION }] as const
 
-	private readonly capabilities = new Set<Capability>()
+	private readonly capabilities = new Set<HotOstrich.Capability>()
 
 	private _walletAddress?: HotOstrich.WalletAddressChanged['payload']['address'] = undefined
 	public get walletAddress(): HotOstrich.WalletAddressChanged['payload']['address'] | undefined { return this._walletAddress }
@@ -133,7 +133,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 		}
 	}
 
-	public readonly updateCapabilities = (capabilitiesToUpdate: Partial<{[key in Capability]: boolean}>) => {
+	public readonly updateCapabilities = (capabilitiesToUpdate: Partial<{[key in HotOstrich.Capability]: boolean}>) => {
 		let capabilitiesChanged = false
 		for (const capability of HotOstrich.ALL_CAPABILITIES) {
 			const newCapabilityState = capabilitiesToUpdate[capability]
@@ -156,7 +156,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 			this.send({
 				type: 'notification',
 				kind: 'capabilities_changed',
-				payload: { capabilities: this.capabilities }
+				payload: { capabilities: Array.from(this.capabilities) }
 			})
 		}
 	}
@@ -215,7 +215,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 	}
 
 	private readonly onGetCapabilities = async (_: HotOstrich.GetCapabilities.Request['payload']): Promise<HotOstrich.GetCapabilities.SuccessResponse['payload']> => {
-		return { capabilities: this.capabilities }
+		return { capabilities: Array.from(this.capabilities) }
 	}
 
 	private readonly onGetWalletAddress = async (_: HotOstrich.GetAddress.Request['payload']): Promise<HotOstrich.GetAddress.SuccessResponse['payload']> => {
@@ -256,6 +256,3 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 const isMessageEvent = (maybe: object): maybe is MessageEvent => 'data' in maybe
 const isEthereumMessageEvent = (event: MessageEvent): event is EthereumMessageEvent => typeof event.data === 'object' && 'ethereum' in event.data && typeof event.data.ethereum === 'object'
 const isClientMessage = (message: Message): message is ClientMessage => message.type === 'broadcast' || message.type === 'request'
-
-type ExtractReadonlySetType<T extends ReadonlySet<any>> = T extends ReadonlySet<infer U> ? U : never
-type Capability = ExtractReadonlySetType<HotOstrich.CapabilitiesChanged['payload']['capabilities']>

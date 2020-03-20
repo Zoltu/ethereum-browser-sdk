@@ -125,7 +125,7 @@ export interface HotOstrichHandlers {
 export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 	public static readonly supportedProtocols = [{ name: HotOstrich.KIND, version: HotOstrich.VERSION }] as const
 
-	private _capabilities: HotOstrich.CapabilitiesChanged['payload']['capabilities'] = new Set()
+	private _capabilities: Set<HotOstrich.Capability> = new Set()
 	public get capabilities() { return this._capabilities }
 	private _walletAddress?: HotOstrich.WalletAddressChanged['payload']['address'] = undefined
 	public get walletAddress() { return this._walletAddress }
@@ -223,8 +223,8 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 	}
 
 	private readonly onCapabilitiesChanged = (payload: HotOstrich.CapabilitiesChanged['payload']): void => {
-		const addressDropped = this._capabilities.has('address') && !payload.capabilities.has('address')
-		this._capabilities = payload.capabilities
+		const addressDropped = this._capabilities.has('address') && !payload.capabilities.includes('address')
+		this._capabilities = new Set(payload.capabilities)
 		this.hotOstrichHandlers.onCapabilitiesChanged()
 		if (addressDropped) this.onWalletAddressChanged({address: undefined})
 	}

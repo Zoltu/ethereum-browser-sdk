@@ -30,6 +30,7 @@
 		"page": "background.html"
 	},
 	"web_accessible_resources": [
-		"vendor/*"
+		"vendor/*",
+		"js/*"
 	]
 }

@@ -188,7 +188,7 @@ export class LedgerWallet {
 		getGasPrice: () => Promise<bigint>,
 		public readonly address: bigint,
 	) {
-		this.jsonRpc = new FetchJsonRpc(jsonRpcEndpoint, fetch, { gasPriceInAttoethProvider: getGasPrice, addressProvider: async () => address, signatureProvider: this.sign})
+		this.jsonRpc = new FetchJsonRpc(jsonRpcEndpoint, fetch, { gasPriceInAttoethProvider: getGasPrice, addressProvider: async () => address, signatureProvider: this.sign })
 	}
 	public static async create(jsonRpcEndpoint: string, fetch: Window['fetch'], getGasPrice: () => Promise<bigint>): Promise<LedgerWallet> {
 		const address = await getAddress()
