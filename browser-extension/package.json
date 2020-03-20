@@ -4,18 +4,18 @@
 	"license": "Unlicense",
 	"dependencies": {
 		"@zoltu/ethereum-browser-sdk": "file:../ethereum-browser-sdk/library",
-		"@zoltu/ethereum-abi-encoder": "3.2.2",
-		"@zoltu/ethereum-crypto": "2.1.0",
-		"@zoltu/ethereum-fetch-json-rpc": "file:../../ethereum-fetch-json-rpc",
-		"@zoltu/ethereum-types": "file:../../ethereum-types",
+		"@zoltu/ethereum-abi-encoder": "4.0.0",
+		"@zoltu/ethereum-crypto": "2.1.1",
+		"@zoltu/ethereum-fetch-json-rpc": "11.1.0",
+		"@zoltu/ethereum-types": "8.3.2",
 		"@zoltu/ethereum-ledger": "3.0.0",
-		"es-module-shims": "0.4.5",
-		"webextension-polyfill": "0.4.0"
+		"es-module-shims": "0.4.6",
+		"webextension-polyfill": "0.6.0"
 	},
 	"devDependencies": {
-		"@types/firefox-webext-browser": "67.0.2",
+		"@types/firefox-webext-browser": "70.0.1",
 		"recursive-fs": "1.1.2",
-		"typescript": "3.6.3"
+		"typescript": "3.8.3"
 	},
 	"scripts": {
 		"clean": "recursive-delete \"output\"",
