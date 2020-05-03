@@ -11,7 +11,8 @@
 		"196": "icons/favicon-196x196.png"
 	},
 	"permissions": [
-		"activeTab"
+		"activeTab",
+		"<all_urls>"
 	],
 	// eval is used by es-module-shims, thus we need to enable it. as a development policy, it should never be used in the background script
 	"content_security_policy": "script-src 'self' blob: 'unsafe-eval'; object-src 'self';",

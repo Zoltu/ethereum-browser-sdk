@@ -7,12 +7,21 @@ if (!(window as any).legacyEthereumInjected) {
 	(window as any).legacyEthereumInjected = true
 
 	// inject a script that converts `ethereum.send` calls to events
-	const container = document.head || document.documentElement
 	const scriptTag = document.createElement('script')
 	scriptTag.setAttribute('type', 'module')
 	scriptTag.setAttribute('src', browser.runtime.getURL('js/injected.js'))
-	container.insertBefore(scriptTag, container.children[0])
-	container.removeChild(scriptTag)
+
+	const headOrRoot = document.head || document.documentElement
+	headOrRoot.insertBefore(scriptTag, headOrRoot.children[0])
+	headOrRoot.removeChild(scriptTag)
+
+	const iframes = document.querySelectorAll('iframe')
+	iframes.forEach(iframe => {
+		const iframeHead = iframe.querySelector('head')
+		const injectionTarget = (iframeHead !== null) ? iframeHead : iframe
+		injectionTarget.insertBefore(scriptTag, injectionTarget.children[0])
+		injectionTarget.removeChild(scriptTag)
+	})
 
 	console.log('legacy ethereum provider script has been injected')
 }

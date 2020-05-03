@@ -50,13 +50,17 @@ const send = async (method: string, parameters: unknown[]) => {
 
 const sendAsync = async (payload: { readonly method: string, readonly params: unknown[] }, callback: (error: { readonly code: number, readonly message: string, readonly data?: unknown } | null, result: unknown | null) => void) => {
 	send(payload.method, payload.params)
-		.then(result => ('error' in result) ? callback(result.error, null) : callback(null, result.result))
+		.then(result => callback(null, result))
 		// catch should be unreachable given that send converts all Errors into JSON-RPC erorrs, but we add the catch here to satisfy unhandled promise rejection warnings in browser
 		.catch(error => callback(error, null))
 }
 
-const on = async (_: 'accountsChanged', callback: (accounts: string[]) => void) => {
-	accountChangedSubscribers.push(callback)
+const on = async (kind: string, callback: (accounts: string[]) => void) => {
+	switch (kind) {
+		case 'accountsChanged':
+			accountChangedSubscribers.push(callback)
+			break
+	}
 }
 
 ;(window as any).ethereum = { enable, send, sendAsync, on }
