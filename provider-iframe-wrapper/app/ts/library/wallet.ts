@@ -34,7 +34,8 @@ export class ViewingWallet {
 
 	public readonly legacyJsonrpc: (method: 'eth_call'|'eth_estimateGas'|'eth_sendTransaction'|'eth_signTransaction', parameters: unknown[]) => unknown = async (method, parameters) => {
 		if (method === 'eth_sendTransaction' || method === 'eth_signTransaction') throw new JsonRpcError(-32601, `${method} is not supported by this wallet.`)
-		return await this.jsonRpc.remoteProcedureCall({ jsonrpc: '2.0', id: 1, method, parameters })
+		const response = await this.jsonRpc.remoteProcedureCall({ jsonrpc: '2.0', id: 1, method, params: parameters })
+		return response.result
 	}
 }
 
@@ -130,7 +131,7 @@ export class MnemonicWallet {
 		const transaction = parameters[0] as Partial<RawOnChainTransaction>
 		switch (method) {
 			case 'eth_estimateGas': {
-				return await this.jsonRpc.estimateGas({
+				const result = await this.jsonRpc.estimateGas({
 					from: BigInt(transaction.from || await this.jsonRpc.coinbase()),
 					to: BigInt(transaction.to),
 					value: BigInt(transaction.value || 0n),
@@ -138,9 +139,10 @@ export class MnemonicWallet {
 					gasLimit: BigInt(transaction.gas || 1_000_000_000n),
 					gasPrice: BigInt(transaction.gasPrice || await this.jsonRpc.getGasPrice()),
 				})
+				return `0x${result.toString(16)}`
 			}
 			case 'eth_call': {
-				return await this.jsonRpc.offChainContractCall({
+				const result = await this.jsonRpc.offChainContractCall({
 					to: BigInt(transaction.to),
 					data: Bytes.fromHexString(transaction.data || ''),
 					...(transaction.from === undefined ? {} : {from: BigInt(transaction.from)}),
@@ -148,9 +150,10 @@ export class MnemonicWallet {
 					...(transaction.gas === undefined ? {} : {gasLimit: BigInt(transaction.gas)}),
 					...(transaction.gasPrice === undefined ? {} : {gasPrice: BigInt(transaction.gasPrice)}),
 				})
+				return result.to0xString()
 			}
 			case 'eth_sendTransaction': {
-				return await this.jsonRpc.onChainContractCall({
+				const result = await this.jsonRpc.onChainContractCall({
 					to: transaction.to === null || transaction.to === undefined ? null : BigInt(transaction.to),
 					data: transaction.data === undefined ? new Uint8Array(0) : Bytes.fromHexString(transaction.data),
 					...(transaction.from === undefined ? {} : {from: BigInt(transaction.from)}),
@@ -158,6 +161,7 @@ export class MnemonicWallet {
 					...(transaction.gas === undefined ? {} : {gasLimit: BigInt(transaction.gas)}),
 					...(transaction.gasPrice === undefined ? {} : {gasPrice: BigInt(transaction.gasPrice)}),
 				})
+				return result.hash.toString(16).padStart(64, '0')
 			}
 			case 'eth_signTransaction': {
 				const gasEstimatingTransaction: IOffChainTransaction = {
@@ -174,7 +178,8 @@ export class MnemonicWallet {
 					nonce: BigInt(transaction.nonce || await this.jsonRpc.getTransactionCount(gasEstimatingTransaction.from, 'pending')),
 					chainId: await this.jsonRpc.getChainId(),
 				}
-				return await this.jsonRpc.signTransaction(unsignedTransaction)
+				const result = await this.jsonRpc.signTransaction(unsignedTransaction)
+				return Bytes.fromByteArray(result.encodedTransaction).to0xString()
 			}
 		}
 	}
@@ -269,7 +274,7 @@ export class LedgerWallet {
 		const transaction = parameters[0] as Partial<RawOnChainTransaction>
 		switch (method) {
 			case 'eth_estimateGas': {
-				return await this.jsonRpc.estimateGas({
+				const result = await this.jsonRpc.estimateGas({
 					from: BigInt(transaction.from || await this.jsonRpc.coinbase()),
 					to: BigInt(transaction.to),
 					value: BigInt(transaction.value || 0n),
@@ -277,9 +282,10 @@ export class LedgerWallet {
 					gasLimit: BigInt(transaction.gas || 1_000_000_000n),
 					gasPrice: BigInt(transaction.gasPrice || await this.jsonRpc.getGasPrice()),
 				})
+				return `0x${result.toString(16)}`
 			}
 			case 'eth_call': {
-				return await this.jsonRpc.offChainContractCall({
+				const result = await this.jsonRpc.offChainContractCall({
 					to: BigInt(transaction.to),
 					data: Bytes.fromHexString(transaction.data || ''),
 					...(transaction.from === undefined ? {} : {from: BigInt(transaction.from)}),
@@ -287,9 +293,10 @@ export class LedgerWallet {
 					...(transaction.gas === undefined ? {} : {gasLimit: BigInt(transaction.gas)}),
 					...(transaction.gasPrice === undefined ? {} : {gasPrice: BigInt(transaction.gasPrice)}),
 				})
+				return result.to0xString()
 			}
 			case 'eth_sendTransaction': {
-				return await this.jsonRpc.onChainContractCall({
+				const result = await this.jsonRpc.onChainContractCall({
 					to: transaction.to === null || transaction.to === undefined ? null : BigInt(transaction.to),
 					data: transaction.data === undefined ? new Uint8Array(0) : Bytes.fromHexString(transaction.data),
 					...(transaction.from === undefined ? {} : {from: BigInt(transaction.from)}),
@@ -297,6 +304,7 @@ export class LedgerWallet {
 					...(transaction.gas === undefined ? {} : {gasLimit: BigInt(transaction.gas)}),
 					...(transaction.gasPrice === undefined ? {} : {gasPrice: BigInt(transaction.gasPrice)}),
 				})
+				return result.hash.toString(16).padStart(64, '0')
 			}
 			case 'eth_signTransaction': {
 				const gasEstimatingTransaction: IOffChainTransaction = {
@@ -313,7 +321,8 @@ export class LedgerWallet {
 					nonce: BigInt(transaction.nonce || await this.jsonRpc.getTransactionCount(gasEstimatingTransaction.from, 'pending')),
 					chainId: await this.jsonRpc.getChainId(),
 				}
-				return await this.jsonRpc.signTransaction(unsignedTransaction)
+				const result = await this.jsonRpc.signTransaction(unsignedTransaction)
+				return Bytes.fromByteArray(result.encodedTransaction).to0xString()
 			}
 		}
 	}
@@ -376,8 +385,10 @@ export class ViewingRecoverableWallet {
 				// data padding
 				...new Bytes(originalDataBytes.length !== 32 ? 32 - originalDataBytes.length % 32 : 0),
 			])
-		const mutatedTransaction = { ...originalTransaction, to: `0x${this.address.toString(16).padStart(40, '0')}`, data: data.to0xString(), value: `0x0` }
-		return await this.underlyingWallet.legacyJsonrpc(method, [mutatedTransaction])
+			const to = `0x${this.address.toString(16).padStart(40, '0')}`
+			const from = `0x${this.underlyingWallet.address.toString(16).padStart(40, '0')}`
+			const mutatedTransaction = { ...originalTransaction, to, from, data: data.to0xString(), value: `0x0` }
+			return await this.underlyingWallet.legacyJsonrpc(method, [mutatedTransaction])
 	}
 }
 
@@ -489,8 +500,16 @@ export class RecoverableWallet {
 				// data padding
 				...new Bytes(originalDataBytes.length !== 32 ? 32 - originalDataBytes.length % 32 : 0),
 			])
-		const mutatedTransaction = { ...originalTransaction, to: `0x${this.address.toString(16).padStart(40, '0')}`, data: data.to0xString(), value: `0x0` }
-		return await this.underlyingWallet.legacyJsonrpc(method, [mutatedTransaction])
+		const to = `0x${this.address.toString(16).padStart(40, '0')}`
+		const from = `0x${this.underlyingWallet.address.toString(16).padStart(40, '0')}`
+		const mutatedTransaction = { ...originalTransaction, to, from, data: data.to0xString(), value: `0x0` }
+		const result = await this.underlyingWallet.legacyJsonrpc(method, [mutatedTransaction])
+		if (method === 'eth_call') {
+			// TODO: see if we can do better with the types here so we don't have to typecast as much
+			return Bytes.fromByteArray(decodeParameters([{ name: 'result', type: 'bytes' }], Bytes.fromHexString(result as string)).result as Uint8Array).to0xString()
+		} else {
+			return result
+		}
 	}
 }
 

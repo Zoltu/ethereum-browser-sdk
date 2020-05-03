@@ -16,6 +16,7 @@ const fetch = window.fetch.bind(window)
 const jsonRpcEndpoint = 'https://ethereum.zoltu.io/' as const
 // const jsonRpcEndpoint = 'http://127.0.0.1:1235/' as const
 const getGasPrice = async (): Promise<bigint> => 1n*10n**9n
+// TODO: present gas price as a configuration option in UI
 
 let handshakeChannel: provider.HandshakeChannel | undefined = undefined
 let hotOstrichChannel: HotOstrichChannel | undefined = undefined

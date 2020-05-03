@@ -19,7 +19,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 	) {
 		// CONSIDER: this is a bit sketchy, if the channel constructor makes any calls to the the handler during construction they will fail because we aren't done constructing `this` yet
 		this.hotOstrichChannel = new provider.HotOstrichChannel(thisWindow, childWindow, 'my-iframe-provider', this)
-		this.hotOstrichChannel.updateCapabilities({ 'call': true, 'submit': true })
+		this.hotOstrichChannel.updateCapabilities({ call: true, submit: true, legacy: true })
 	}
 
 	public readonly shutdown = () => this.hotOstrichChannel.shutdown()
@@ -28,9 +28,10 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 	public readonly updateWallet = (wallet: Wallet | undefined) => {
 		this.wallet = wallet
 		this.hotOstrichChannel.walletAddress = (this.wallet === undefined) ? undefined : this.wallet.address
+		const hasAddress = this.wallet && 'address' in this.wallet
 		const canSignMessage = this.wallet && 'signMessage' in this.wallet
 		const canSignTransaction = this.wallet && 'submitContractCall' in this.wallet
-		this.hotOstrichChannel.updateCapabilities({ signMessage: canSignMessage, signTransaction: canSignTransaction })
+		this.hotOstrichChannel.updateCapabilities({ address: hasAddress, signMessage: canSignMessage, signTransaction: canSignTransaction })
 	}
 
 	// for submitting transactions/queries only (e.g., getBalance), for anything that requires an account or signing, go through the wallet
@@ -120,18 +121,22 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 			case 'eth_submitHashrate':
 			case 'eth_submitWork':
 			case 'eth_syncing':
-			case 'eth_uninstallFilter': {
-				return await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method as JsonRpcMethod, parameters: parameters })
+			case 'eth_uninstallFilter':
+			case 'net_version': {
+				const response = await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method as JsonRpcMethod, params: parameters })
+				return response.result
 			}
 			default: {
 				if (this.wallet === undefined) {
 					switch (method) {
 						case 'eth_coinbase': return null
 						case 'eth_accounts': return []
+						case 'eth_requestAccounts': return []
 
 						case 'eth_estimateGas':
 						case 'eth_call': {
-							return await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method as JsonRpcMethod, parameters: parameters })
+							const response = await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method, params: parameters })
+							return response.result
 						}
 
 						case 'eth_sendTransaction':
@@ -143,8 +148,9 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 					}
 				} else {
 					switch (method) {
-						case 'eth_coinbase': return await bigintToAddressString(this.wallet.address)
-						case 'eth_accounts': return [await bigintToAddressString(this.wallet.address)]
+						case 'eth_coinbase': return `0x${await bigintToAddressString(this.wallet.address)}`
+						case 'eth_accounts': return [`0x${await bigintToAddressString(this.wallet.address)}`]
+						case 'eth_requestAccounts': return [`0x${await bigintToAddressString(this.wallet.address)}`]
 
 						case 'eth_call':
 						case 'eth_estimateGas':
