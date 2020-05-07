@@ -388,8 +388,14 @@ export class ViewingRecoverableWallet {
 			const to = `0x${this.address.toString(16).padStart(40, '0')}`
 			const from = `0x${this.underlyingWallet.address.toString(16).padStart(40, '0')}`
 			const mutatedTransaction = { ...originalTransaction, to, from, data: data.to0xString(), value: `0x0` }
-			return await this.underlyingWallet.legacyJsonrpc(method, [mutatedTransaction])
-	}
+			const result = await this.underlyingWallet.legacyJsonrpc(method, [mutatedTransaction])
+			if (method === 'eth_call') {
+				// TODO: see if we can do better with the types here so we don't have to typecast as much
+				return Bytes.fromByteArray(decodeParameters([{ name: 'result', type: 'bytes' }], Bytes.fromHexString(result as string)).result as Uint8Array).to0xString()
+			} else {
+				return result
+			}
+		}
 }
 
 export class RecoverableWallet {
