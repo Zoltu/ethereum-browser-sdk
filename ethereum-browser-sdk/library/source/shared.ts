@@ -409,7 +409,7 @@ export namespace HotOstrich {
 			readonly type: 'request'
 			readonly payload: {
 				readonly method: string
-				readonly parameters: unknown[]
+				readonly parameters?: unknown
 			}
 		}
 		export interface SuccessResponse extends Kind, BaseSuccessResponse {
