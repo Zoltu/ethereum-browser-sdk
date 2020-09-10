@@ -42,12 +42,12 @@ abstract class Channel<T extends MessageEnvelope> {
 	}
 
 	protected readonly send = (message: ClientMessage): void => {
-		const ethereumEnvelope: EthereumEnvelope = {
+		const ethereumEnvelope = {
 			ethereum: {
 				channel: this.clientChannelName,
 				kind: this.kind,
 				message: message,
-			} as MessageEnvelope // _we_ know that T will always be _either_ Handshake.Envelope _OR_ HotOstrich.Envelope, but the compiler thinks _BOTH_ is possible, so we have to cast
+			} as const
 		}
 		if (this.window.parent && this.window.parent !== this.window) {
 			this.window.parent.postMessage(ethereumEnvelope, '*')

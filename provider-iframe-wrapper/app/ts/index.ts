@@ -13,10 +13,9 @@ function render() {
 
 const errorHandler = new ErrorHandler()
 const fetch = window.fetch.bind(window)
-const jsonRpcEndpoint = 'https://ethereum.zoltu.io/' as const
+const jsonRpcEndpoint = 'https://mainnet.infura.io/v3/60bdf3ec0a954aa8aba21478529ed1ce' as const
 // const jsonRpcEndpoint = 'http://127.0.0.1:1235/' as const
-const getGasPrice = async (): Promise<bigint> => 1n*10n**9n
-// TODO: present gas price as a configuration option in UI
+let gasPrice = 10n**9n
 
 let handshakeChannel: provider.HandshakeChannel | undefined = undefined
 let hotOstrichChannel: HotOstrichChannel | undefined = undefined
@@ -26,7 +25,6 @@ const rootModel = createOnChangeProxy<AppModel>(render, {
 	errorHandler,
 	jsonRpcEndpoint,
 	fetch,
-	getGasPrice,
 	childWindowChanged: childWindow => {
 		if (hotOstrichChannel !== undefined) hotOstrichChannel.shutdown()
 		if (handshakeChannel !== undefined) handshakeChannel.shutdown()
@@ -38,17 +36,16 @@ const rootModel = createOnChangeProxy<AppModel>(render, {
 		window.addEventListener('message', iframeEventPropagator)
 
 		handshakeChannel = new provider.HandshakeChannel(window, childWindow, new HandshakeHandler(errorHandler))
-		hotOstrichChannel = new HotOstrichChannel(errorHandler, fetch, window, childWindow, jsonRpcEndpoint, getGasPrice)
+		hotOstrichChannel = new HotOstrichChannel(errorHandler, fetch, window, childWindow, jsonRpcEndpoint, async () => gasPrice)
 	},
 	walletChanged: async (wallet: Wallet|undefined) => {
 		rootModel.wallet = wallet
 		if (hotOstrichChannel === undefined) return
 		hotOstrichChannel.updateWallet(rootModel.wallet)
 	},
+	setGasPrice: (value: bigint) => gasPrice = value,
+	getGasPrice: async () => gasPrice,
 
-	// // getter/setter so the wallet internals don't get proxied (its contents are immutable)
-	// get wallet() { return wallet },
-	// set wallet(newWallet) { wallet = newWallet },
 	wallet: undefined,
 	noProxy: new Set(['wallet']),
 })

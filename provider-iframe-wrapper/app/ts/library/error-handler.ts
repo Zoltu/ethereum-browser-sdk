@@ -11,7 +11,7 @@ export class ErrorHandler {
 	}
 
 	public readonly asyncWrapper = <R, P extends any[]>(asyncFunction: (...args: P) => Promise<R>): (...args: P) => void => {
-		return (...args: P) => asyncFunction(...args).catch(this.noticeError)
+		return (...args: P) => { asyncFunction(...args).catch(this.noticeError) }
 	}
 }
 
