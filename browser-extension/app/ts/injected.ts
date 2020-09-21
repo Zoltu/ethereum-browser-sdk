@@ -40,8 +40,8 @@ const request = async (options: { readonly method: string, readonly params?: unk
 		// if it is an Error, add context to it if context doesn't already exist
 		if (error instanceof Error) {
 			if (!('code' in error)) (error as any).code = -32603
-			if (!('data' in error)) (error as any).data = { request: options }
-			if (!('request' in (error as any).data)) (error as any).data.request = options
+			if (!('data' in error) || (error as any).data === undefined || (error as any).data === null) (error as any).data = { request: options }
+			else if (!('request' in (error as any).data)) (error as any).data.request = options
 			throw error
 		}
 		// if someone threw something besides an Error, wrap it up in an error
