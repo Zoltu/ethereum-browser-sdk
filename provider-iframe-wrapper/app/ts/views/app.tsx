@@ -23,10 +23,14 @@ export const App = (model: AppModel) => {
 	const [collapsed, setCollapsed] = React.useState(false)
 	const [dappAddress, setDappAddress] = React.useState('http://127.0.0.1:62091')
 	const onNavigate = (url: string) => {
-		setDappAddress('')
-		setTimeout(() => {
+		if (url === dappAddress) {
+			// refresh
+			setDappAddress('')
+			// for some reason Chrome chokes if you switch too quickly
+			setTimeout(() => setDappAddress(url), 100)
+		} else {
 			setDappAddress(url)
-		})
+		}
 	}
 	return <>
 		{ !collapsed && <aside data-bind='hidden: collapse'>
