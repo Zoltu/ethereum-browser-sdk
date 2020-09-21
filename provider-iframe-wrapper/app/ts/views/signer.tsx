@@ -13,6 +13,7 @@ const sharedStyle: React.CSSProperties = {
 	borderColor: 'black',
 	borderStyle: 'solid',
 	margin: '5px',
+	overflowWrap: 'anywhere',
 }
 
 export interface SignerModel {
