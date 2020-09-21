@@ -10,7 +10,7 @@ browser.runtime.onConnect.addListener(port => onContentScriptConnected(port).cat
 async function contentInjector(tab: browser.tabs.Tab): Promise<void> {
 	if (tab.id === undefined) return
 	await browser.tabs.executeScript(tab.id, { file: '/vendor/webextension-polyfill/browser-polyfill.js', allFrames: true })
-	await browser.tabs.executeScript(tab.id, { file: '/js/content.js', allFrames: true })
+	// await browser.tabs.executeScript(tab.id, { file: '/js/content.js', allFrames: true })
 	await browser.tabs.executeScript(tab.id, { file: '/js/legacy-injector.js', allFrames: true })
 	// TODO: add a GUI to the extension that shows up on click (as well as injecting the content script) that lets the user inject the legacy provider optionally (rather than forcing it in)
 }
