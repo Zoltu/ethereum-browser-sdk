@@ -4,6 +4,7 @@ import { DappSelector } from './dapp-selector'
 import { IFrame } from './iframe'
 import { WalletSelectorModal } from './wallet-selector-modal'
 import { GasPriceChooser } from './gas-price-chooser'
+import { Signer, SignerModel } from './signer'
 
 export interface AppModel {
 	readonly errorHandler: ErrorHandler
@@ -14,6 +15,7 @@ export interface AppModel {
 	readonly setGasPrice: (value: bigint) => void
 	readonly getGasPrice: () => Promise<bigint>
 	wallet: Wallet | undefined
+	signerDetails?: SignerModel['details']
 	// used when instantiating to prevent certain properties from being watched for changes
 	noProxy: Set<string>
 }
@@ -32,6 +34,7 @@ export const App = (model: AppModel) => {
 			<WalletSelectorModal errorHandler={model.errorHandler} fetch={model.fetch} jsonRpcEndpoint={model.jsonRpcEndpoint} getGasPrice={model.getGasPrice} walletChanged={model.walletChanged} wallet={model.wallet}/>
 			<GasPriceChooser setGasPrice={model.setGasPrice}/>
 		</aside>}
+		{model.signerDetails && <Signer style={{ position: 'absolute', right:'0px' }} errorHandler={model.errorHandler} details={model.signerDetails}/>}
 		{ collapsed && <button onClick={() => setCollapsed(false)}>Show Wallet Details</button>}
 		{ !collapsed && <button onClick={() => setCollapsed(true)}>Hide Wallet Details</button>}
 		<IFrame childWindowChanged={model.childWindowChanged} dappAddress={dappAddress}/>

@@ -1,19 +1,29 @@
 {
 	"name": "@zoltu/ethereum-browser-sdk",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"description": "TBD",
 	"repository": {},
 	"license": "Unlicense",
-	"main": "output-node/index.js",
-	"module": "output-es/index.js",
+	"main": "./output-cjs/index.js",
+	"exports": {
+		"import": "./output-esm/index.js",
+		"require": "./output-cjs/index.js"
+	},
 	"devDependencies": {
 		"@zoltu/typescript-transformer-append-js-extension": "1.0.1",
-		"ts-node": "8.6.2",
-		"ttypescript": "1.5.10",
-		"typescript": "3.7.5"
+		"ts-node": "9.0.0",
+		"ttypescript": "1.5.12",
+		"typescript": "4.0.3"
 	},
 	"scripts": {
-		"build": "ttsc --project tsconfig-es.json && tsc --project tsconfig-node.json",
-		"watch": "ttsc --project tsconfig-es.json --watch"
-	}
+		"build": "ttsc --project tsconfig-esm.json && tsc --project tsconfig-cjs.json",
+		"watch": "ttsc --project tsconfig-esm.json --watch"
+	},
+	"files": [
+		"/output-esm/",
+		"/output-cjs/",
+		"/source/",
+		"README.md",
+		"LICENSE"
+	]
 }

@@ -30,7 +30,7 @@ const enable = async () => {
 	return [`0x${provider.hotOstrich.walletAddress.toString(16)}`]
 }
 
-const request = async (options: { readonly method: string, readonly params?: unknown }) => {
+const request = async (options: { readonly method: string, readonly params?: unknown[] }) => {
 	try {
 		const provider = getRandomLegacyProvider()
 		if (provider === undefined) throw new JsonRpcError(-32601, `No available Ethereum providers that work with legacy JSON-RPC.  Consider updating this application to use Ethereum Events.`)
@@ -49,11 +49,18 @@ const request = async (options: { readonly method: string, readonly params?: unk
 	}
 }
 
-const send = async (method: string, params: unknown) => {
-	return await request({ method, params })
+// 🤬 Uniswap, among others, require `send` to be implemented even though it was never part of any final specification.
+// To make matters worse, some versions of send will have a first parameter that is an object (like `request`) and others will have a first and second parameter.
+// On top of all that, some applications have a mix of both!
+const send = async (method: string | {method: string, params: unknown[]}, params: unknown[]) => {
+	if (typeof method === 'object') {
+		return await request({ method: method.method, params: method.params})
+	} else {
+		return await request({ method, params })
+	}
 }
 
-const sendAsync = async (payload: { id: string | number | null, method: string, params: unknown }, callback: (error: IJsonRpcError | null, response: IJsonRpcSuccess<unknown> | null) => void) => {
+const sendAsync = async (payload: { id: string | number | null, method: string, params: unknown[] }, callback: (error: IJsonRpcError | null, response: IJsonRpcSuccess<unknown> | null) => void) => {
 	request(payload)
 		.then(result => callback(null, { jsonrpc: '2.0', id: payload.id, result }))
 		// since `request(...)` only throws things shaped like `JsonRpcError`, we can rely on it having those properties.

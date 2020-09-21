@@ -1,6 +1,6 @@
 import { Handshake, HotOstrich, MessageEnvelope, EthereumEnvelope, ClientMessage, ProviderMessage, Message, BaseRequest, BaseResponse, ProviderResponse } from "./shared";
 import { FutureUnion, Future } from "./future";
-import { assertNever, newCorrelationId } from "./utils";
+import { assertNever, newCorrelationId, uuidv4 } from "./utils";
 
 interface WindowLike {
 	addEventListener(type: 'message', listener: (message: any) => void): void
@@ -129,6 +129,8 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 	public get capabilities() { return this._capabilities }
 	private _walletAddress?: HotOstrich.WalletAddressChanged['payload']['address'] = undefined
 	public get walletAddress() { return this._walletAddress }
+	private _clientId: string = uuidv4()
+	public get clientId() { return this._clientId }
 
 	public constructor(window: Window, private readonly providerId: string, private readonly hotOstrichHandlers: HotOstrichHandlers) {
 		super(window)
@@ -170,6 +172,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 		const message = {
 			type: 'request' as const,
 			kind: kind,
+			client_id: this.clientId,
 			correlation_id: correlationId,
 			payload: requestPayload,
 		}
@@ -198,6 +201,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 	private pendingRequests: Array<PendingRequestUnion<HotOstrich.ClientRequest>> = []
 
 	private readonly onHotOstrichResponse = (response: HotOstrich.ProviderResponse): void => {
+		if (response.client_id !== this.clientId) return
 		const pendingRequest = this.pendingRequests.find(pendingRequest => pendingRequest.correlationId === response.correlation_id)
 		if (pendingRequest === undefined) throw new Error(`Received a response without finding a matching request.  Maybe it already timed out?  ${JSON.stringify(response, (_key, value) => typeof value === 'bigint' ? `0x${value.toString(16)}` : value)}`)
 		// TODO: `response` should be treated as untrusted user input and validate before resolving the promise with it.  If it doesn't match expectations then we should reject with an appropriate error rather than pushing the problem downstream

@@ -3,10 +3,10 @@
 	"repository": {},
 	"license": "Unlicense",
 	"dependencies": {
-		"@types/node": "12.7.5",
-		"@zoltu/file-copier": "2.2.0",
+		"@types/node": "14.11.1",
+		"@zoltu/file-copier": "2.2.1",
 		"@zoltu/typescript-transformer-append-js-extension": "1.0.1",
-		"ts-node": "8.4.1",
-		"typescript": "3.6.3"
+		"ts-node": "9.0.0",
+		"typescript": "4.0.3"
 	}
 }

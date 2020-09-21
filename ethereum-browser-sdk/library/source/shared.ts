@@ -20,13 +20,42 @@ export type ContractParameter = Uint8Array | bigint | boolean | string | Contrac
 export interface ContractParameterArray extends ReadonlyArray<ContractParameter> { }
 export interface ContractParameterTuple { [key: string]: ContractParameter }
 
-export interface BaseMessage { readonly type: MessageType, readonly kind: MessageKind, readonly payload: MessagePayload }
-export interface BaseBroadcast extends BaseMessage { readonly type: 'broadcast', readonly kind: Extract<Message, {type:'broadcast'}>['kind'] }
-export interface BaseNotification extends BaseMessage { readonly type: 'notification', readonly kind: Extract<Message, {type:'notification'}>['kind'] }
-export interface BaseRequest extends BaseMessage { readonly type: 'request', readonly kind: Extract<Message, {type:'request'}>['kind'], readonly correlation_id: string }
-export interface BaseResponse extends BaseMessage { readonly type: 'response', readonly kind: Extract<Message, {type:'response'}>['kind'], readonly correlation_id: string, readonly success: boolean }
-export interface BaseSuccessResponse extends BaseResponse { readonly success: true }
-export interface BaseFailureResponse extends BaseResponse { readonly success: false, readonly payload: { readonly message: string, readonly data: unknown } }
+export interface BaseMessage {
+	readonly type: MessageType,
+	readonly kind: MessageKind,
+	readonly payload: MessagePayload
+}
+export interface BaseBroadcast extends BaseMessage {
+	readonly type: 'broadcast',
+	readonly kind: Extract<Message, {type:'broadcast'}>['kind']
+}
+export interface BaseNotification extends BaseMessage {
+	readonly type: 'notification',
+	readonly kind: Extract<Message, {type:'notification'}>['kind']
+}
+export interface BaseRequest extends BaseMessage {
+	readonly type: 'request',
+	readonly kind: Extract<Message, {type:'request'}>['kind'],
+	readonly client_id: string,
+	readonly correlation_id: string
+}
+export interface BaseResponse extends BaseMessage {
+	readonly type: 'response',
+	readonly kind: Extract<Message, {type:'response'}>['kind'],
+	readonly client_id: string,
+	readonly correlation_id: string,
+	readonly success: boolean
+}
+export interface BaseSuccessResponse extends BaseResponse {
+	readonly success: true
+}
+export interface BaseFailureResponse extends BaseResponse {
+	readonly success: false,
+	readonly payload: {
+		readonly message: string,
+		readonly data: unknown
+	}
+}
 
 interface BaseEnvelope {
 	readonly kind: MessageEnvelopeKind
@@ -409,7 +438,7 @@ export namespace HotOstrich {
 			readonly type: 'request'
 			readonly payload: {
 				readonly method: string
-				readonly parameters?: unknown
+				readonly parameters?: unknown[]
 			}
 		}
 		export interface SuccessResponse extends Kind, BaseSuccessResponse {

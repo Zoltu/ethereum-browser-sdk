@@ -21,7 +21,9 @@ async function onContentScriptConnected(port: browser.runtime.Port): Promise<voi
 	const postMessage = (message: any, _: string) =>  port.postMessage(message)
 
 	const errorHandler = new ErrorHandler()
-	const jsonRpcEndpoint = 'https://mainnet.infura.io/v3/60bdf3ec0a954aa8aba21478529ed1ce'
+	const jsonRpcEndpoint = 'https://ethereum.zoltu.io/' as const
+	// const jsonRpcEndpoint = 'https://mainnet.infura.io/v3/60bdf3ec0a954aa8aba21478529ed1ce' as const
+	// const jsonRpcEndpoint = 'http://127.0.0.1:1237/' as const
 	const getGasPrice = async () => 1n
 
 	new provider.HandshakeChannel({addEventListener, removeEventListener}, {postMessage}, {

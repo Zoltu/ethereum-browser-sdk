@@ -2,7 +2,7 @@ import { secp256k1, mnemonic, hdWallet, ethereum, keccak256 } from '@zoltu/ether
 import { Bytes, JsonRpc, RawOnChainTransaction, IOffChainTransaction, RawOffChainTransaction } from '@zoltu/ethereum-types'
 import { getAddress, signTransaction, signMessage } from '@zoltu/ethereum-ledger'
 import { provider } from '@zoltu/ethereum-browser-sdk'
-import { encodeMethod, decodeParameters } from '@zoltu/ethereum-abi-encoder'
+import { encodeMethod, decodeParameters, decodeMethod } from '@zoltu/ethereum-abi-encoder'
 import { FetchJsonRpc } from '@zoltu/ethereum-fetch-json-rpc'
 import { contractParametersToEncodables, constructorDataBytes } from './abi-stuff'
 import { JsonRpcError } from './error-handler'
@@ -32,7 +32,7 @@ export class ViewingWallet {
 		})
 	}
 
-	public readonly legacyJsonrpc: (method: 'eth_call'|'eth_estimateGas'|'eth_sendTransaction'|'eth_signTransaction', parameters: unknown[]) => unknown = async (method, parameters) => {
+	public readonly legacyJsonrpc: (method: 'eth_call'|'eth_estimateGas'|'eth_sendTransaction'|'eth_signTransaction', parameters: unknown[]) => Promise<unknown> = async (method, parameters) => {
 		if (method === 'eth_sendTransaction' || method === 'eth_signTransaction') throw new JsonRpcError(-32601, `${method} is not supported by this wallet.`)
 		const response = await this.jsonRpc.remoteProcedureCall({ jsonrpc: '2.0', id: 1, method, params: parameters })
 		return response.result
@@ -127,7 +127,7 @@ export class MnemonicWallet {
 		}
 	}
 
-	public readonly legacyJsonrpc: (method: 'eth_call'|'eth_estimateGas'|'eth_sendTransaction'|'eth_signTransaction', parameters: unknown[]) => unknown = async (method, parameters) => {
+	public readonly legacyJsonrpc: (method: 'eth_call'|'eth_estimateGas'|'eth_sendTransaction'|'eth_signTransaction', parameters: unknown[]) => Promise<unknown> = async (method, parameters) => {
 		const transaction = parameters[0] as Partial<RawOnChainTransaction>
 		switch (method) {
 			case 'eth_estimateGas': {
@@ -161,7 +161,7 @@ export class MnemonicWallet {
 					...(transaction.gas === undefined ? {} : {gasLimit: BigInt(transaction.gas)}),
 					...(transaction.gasPrice === undefined ? {} : {gasPrice: BigInt(transaction.gasPrice)}),
 				})
-				return result.hash.toString(16).padStart(64, '0')
+				return `0x${result.hash.toString(16).padStart(64, '0')}`
 			}
 			case 'eth_signTransaction': {
 				const gasEstimatingTransaction: IOffChainTransaction = {
@@ -270,7 +270,7 @@ export class LedgerWallet {
 		}
 	}
 
-	public readonly legacyJsonrpc: (method: 'eth_call'|'eth_estimateGas'|'eth_sendTransaction'|'eth_signTransaction', parameters: unknown[]) => unknown = async (method, parameters) => {
+	public readonly legacyJsonrpc: (method: 'eth_call'|'eth_estimateGas'|'eth_sendTransaction'|'eth_signTransaction', parameters: unknown[]) => Promise<unknown> = async (method, parameters) => {
 		const transaction = parameters[0] as Partial<RawOnChainTransaction>
 		switch (method) {
 			case 'eth_estimateGas': {
@@ -304,7 +304,7 @@ export class LedgerWallet {
 					...(transaction.gas === undefined ? {} : {gasLimit: BigInt(transaction.gas)}),
 					...(transaction.gasPrice === undefined ? {} : {gasPrice: BigInt(transaction.gasPrice)}),
 				})
-				return result.hash.toString(16).padStart(64, '0')
+				return `0x${result.hash.toString(16).padStart(64, '0')}`
 			}
 			case 'eth_signTransaction': {
 				const gasEstimatingTransaction: IOffChainTransaction = {
@@ -350,7 +350,7 @@ export class ViewingRecoverableWallet {
 		return decodeParameters([{ name: 'result', type: 'bytes' }], encodedResult).result as Uint8Array
 	}
 
-	public readonly legacyJsonrpc: (method: 'eth_call'|'eth_estimateGas'|'eth_sendTransaction'|'eth_signTransaction', parameters: unknown[]) => unknown = async (method, parameters) => {
+	public readonly legacyJsonrpc: (method: 'eth_call'|'eth_estimateGas'|'eth_sendTransaction'|'eth_signTransaction', parameters: unknown[]) => Promise<unknown> = async (method, parameters) => {
 		if (method === 'eth_sendTransaction' || method === 'eth_signTransaction') throw new JsonRpcError(-32601, `${method} is not supported by this wallet.`)
 		const originalTransaction = parameters[0] as Partial<RawOffChainTransaction>
 		const originalDataBytes = Bytes.fromHexString(originalTransaction.data || '')
@@ -472,7 +472,7 @@ export class RecoverableWallet {
 		return this.underlyingWallet.submitContractCall(mutatedRequest)
 	}
 
-	public readonly legacyJsonrpc: (method: 'eth_call'|'eth_estimateGas'|'eth_sendTransaction'|'eth_signTransaction', parameters: unknown[]) => unknown = async (method, parameters) => {
+	public readonly legacyJsonrpc: (method: 'eth_call'|'eth_estimateGas'|'eth_sendTransaction'|'eth_signTransaction', parameters: unknown[]) => Promise<unknown> = async (method, parameters) => {
 		const originalTransaction = parameters[0] as Partial<RawOffChainTransaction>
 		const originalDataBytes = Bytes.fromHexString(originalTransaction.data || '')
 		const data = originalTransaction.to
@@ -519,6 +519,123 @@ export class RecoverableWallet {
 	}
 }
 
+export class PromptingWallet {
+	public constructor(
+		public readonly underlyingWallet: SigningWallet,
+		public readonly prompts: {
+			submitContractCall?: (...parameters: Parameters<provider.HotOstrichHandler['submitContractCall']>) => Promise<boolean>
+			submitContractDeployment?: (...parameters: Parameters<provider.HotOstrichHandler['submitContractDeployment']>) => Promise<boolean>
+			submitNativeTokenTransfer?: (...parameters: Parameters<provider.HotOstrichHandler['submitNativeTokenTransfer']>) => Promise<boolean>
+		},
+	) { }
+
+	public get address(): bigint { return this.underlyingWallet.address }
+	public readonly localContractCall: provider.HotOstrichHandler['localContractCall'] = this.underlyingWallet.localContractCall
+	public readonly submitContractCall: provider.HotOstrichHandler['submitContractCall'] = async request => {
+		if (this.prompts.submitContractCall) {
+			if (!await this.prompts.submitContractCall(request)) throw new Error(`User rejected.`)
+		}
+		return await this.underlyingWallet.submitContractCall(request)
+	}
+	public readonly submitContractDeployment: provider.HotOstrichHandler['submitContractDeployment'] = async request => {
+		if (this.prompts.submitContractDeployment) {
+			if (!await this.prompts.submitContractDeployment(request)) throw new Error(`User rejected.`)
+		}
+		return await this.underlyingWallet.submitContractDeployment(request)
+	}
+	public readonly submitNativeTokenTransfer: provider.HotOstrichHandler['submitNativeTokenTransfer'] = async request => {
+		if (this.prompts.submitNativeTokenTransfer) {
+			if (!await this.prompts.submitNativeTokenTransfer(request)) throw new Error(`User rejected.`)
+		}
+		return await this.underlyingWallet.submitNativeTokenTransfer(request)
+	}
+	public readonly legacyJsonrpc: (method: 'eth_call'|'eth_estimateGas'|'eth_sendTransaction'|'eth_signTransaction', parameters: unknown[]) => Promise<unknown> = async (method, parameters) => {
+		function extractToAndData(transaction: object) {
+			const to = 'to' in transaction
+				? BigInt((transaction as {to:string}).to)
+				: 0n
+			const data = 'data' in transaction
+				? Bytes.fromHexString((transaction as {data:string}).data)
+				: new Bytes()
+			return { to, data }
+		}
+		function isDeploy(transaction: object): transaction is { data: string, value?: string, gas?: string } {
+			const {to, data} = extractToAndData(transaction)
+			if (data.length === 0) return false
+			// 0x7A0D94F55792C434d74a40883C6ed8545E406D12 is deterministic deployment proxy
+			if (to !== 0n && to !== 0x7A0D94F55792C434d74a40883C6ed8545E406D12n) return false
+			return true
+		}
+		function isNativeTransfer(transaction: object): transaction is { to: string, value?: string, gas?: string } {
+			const {to, data} = extractToAndData(transaction)
+			if (data.length !== 0) return false
+			if (to === 0n) return false
+			return true
+		}
+		function isContractCall(transaction:object): transaction is { to: string, data: string, value?: string, gas?: string } {
+			const {to, data} = extractToAndData(transaction)
+			if (to === 0n) return false
+			if (data.length === 0) return false
+			return true
+		}
+		async function getSignatureAndParameters(data: string) {
+			const dataBytes = Bytes.fromHexString(data)
+			const selectorBytes = Bytes.fromByteArray(dataBytes.slice(0, 4))
+			const selectorString = selectorBytes.toString()
+			const response = await fetch(`https://www.4byte.directory/api/v1/signatures/?hex_signature=${selectorString}`, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+			if (!response.ok) return {signature: `HTTP ${response.status} when trying to fetch function selector from 4byte.directory.`, parameters: []}
+			const results = (await response.json())?.results as Array<{id: number, text_signature: string}> | undefined
+			if (results === undefined) return {signature: `No results returned by 4byte.directory.`, parameters: []}
+			if (!Array.isArray(results)) return {signature: `4byte.directory returned an unexpected shaped object.`, parameters: []}
+			if (results.length === 0) return {signature: `No signatures found for ${selectorString}`, parameters: []}
+			const signature = results.sort((a,b) => a.id - b.id)[0].text_signature
+			const namedParameters = await decodeMethod(keccak256.hash, signature, dataBytes)
+			const parameters = Object.entries(namedParameters)
+				.map(([key, value]) => [ Number.parseInt(key.substring('arg'.length)), value] as const)
+				.sort(([keyA], [keyB]) => keyA - keyB)
+				.map(([, value]) => value)
+			return {signature, parameters}
+		}
+
+		if (method === 'eth_sendTransaction' || method === 'eth_signTransaction') {
+			const transaction = parameters[0]
+			if (typeof transaction !== 'object') throw new Error(`Expectede an object for first parameter of ${method} but got ${typeof transaction}`)
+			if (transaction === null) throw new Error(`Expected an object for first parameter of ${method} but got null.`)
+			if (isDeploy(transaction) && this.prompts.submitContractDeployment) {
+				const userApproved = await this.prompts.submitContractDeployment({
+					constructor_signature: 'Unknown constructor',
+					constructor_parameters: [],
+					bytecode: Bytes.fromHexString(transaction.data),
+					value: BigInt(transaction.value || 0n),
+					gas_limit: transaction.gas ? BigInt(transaction.gas) : undefined,
+				})
+				if (!userApproved) throw new Error(`User rejected.`)
+			}
+			if (isNativeTransfer(transaction) && this.prompts.submitNativeTokenTransfer) {
+				const userApproved = await this.prompts.submitNativeTokenTransfer({
+					to: BigInt(transaction.to),
+					value: BigInt(transaction || 0n),
+					gas_limit: transaction.gas ? BigInt(transaction.gas) : undefined,
+				})
+				if (!userApproved) throw new Error(`User rejected.`)
+			}
+			if (isContractCall(transaction) && this.prompts.submitContractCall) {
+				const {signature, parameters} = await getSignatureAndParameters(transaction.data)
+				const userApproved = await this.prompts.submitContractCall({
+					contract_address: BigInt(transaction.to),
+					method_signature: signature,
+					method_parameters: parameters,
+					value: BigInt(transaction.value || 0n),
+					gas_limit: transaction.gas ? BigInt(transaction.gas) : undefined,
+					presentation_dsls: {},
+				})
+				if (!userApproved) throw new Error(`User rejected.`)
+			}
+		}
+		return await this.underlyingWallet.legacyJsonrpc(method, parameters)
+	}
+}
+
 export type ViewOnlyWallet = ViewingWallet | ViewingRecoverableWallet
-export type SigningWallet = MnemonicWallet | LedgerWallet | RecoverableWallet
+export type SigningWallet = PromptingWallet | MnemonicWallet | LedgerWallet | RecoverableWallet
 export type Wallet = ViewingWallet | MnemonicWallet | LedgerWallet | ViewingRecoverableWallet | RecoverableWallet

@@ -193,6 +193,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 			this.send({
 				type: 'response',
 				kind: message.kind,
+				client_id: message.client_id,
 				correlation_id: message.correlation_id,
 				success: true,
 				payload: payload,
@@ -202,6 +203,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 			const errorMessage = {
 				type: 'response',
 				kind: message.kind,
+				client_id: message.client_id,
 				correlation_id: message.correlation_id,
 				success: false,
 				payload: {

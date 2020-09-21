@@ -1,10 +1,11 @@
 import { provider } from '@zoltu/ethereum-browser-sdk';
-import { Wallet } from './library/wallet';
+import { PromptingWallet, Wallet } from './library/wallet';
 import { ErrorHandler } from './library/error-handler';
 import { HandshakeHandler } from './library/handshake-handler';
 import { HotOstrichChannel } from './library/hot-ostrich-channel';
 import { createOnChangeProxy } from './library/proxy';
 import { App, AppModel } from './views/app';
+import { Future } from './library/utils';
 
 function render() {
 	const element = React.createElement(App, rootModel)
@@ -13,8 +14,9 @@ function render() {
 
 const errorHandler = new ErrorHandler()
 const fetch = window.fetch.bind(window)
-const jsonRpcEndpoint = 'https://mainnet.infura.io/v3/60bdf3ec0a954aa8aba21478529ed1ce' as const
-// const jsonRpcEndpoint = 'http://127.0.0.1:1235/' as const
+const jsonRpcEndpoint = 'https://ethereum.zoltu.io' as const
+// const jsonRpcEndpoint = 'https://mainnet.infura.io/v3/60bdf3ec0a954aa8aba21478529ed1ce' as const
+// const jsonRpcEndpoint = 'http://127.0.0.1:1237/' as const
 let gasPrice = 10n**9n
 
 let handshakeChannel: provider.HandshakeChannel | undefined = undefined
@@ -39,7 +41,50 @@ const rootModel = createOnChangeProxy<AppModel>(render, {
 		hotOstrichChannel = new HotOstrichChannel(errorHandler, fetch, window, childWindow, jsonRpcEndpoint, async () => gasPrice)
 	},
 	walletChanged: async (wallet: Wallet|undefined) => {
-		rootModel.wallet = wallet
+		if (wallet === undefined) rootModel.wallet = wallet
+		else if (!('submitContractCall' in wallet)) rootModel.wallet = wallet
+		else rootModel.wallet = new PromptingWallet(wallet, {
+			submitContractCall: async (...[request]: Parameters<provider.HotOstrichHandler['submitContractCall']>) => {
+				const future = new Future<boolean>()
+				rootModel.signerDetails = {
+					kind: 'call',
+					action: () => future.resolve(true),
+					cancel: () => future.resolve(false),
+					contractAddress: request.contract_address,
+					methodSignature: request.method_signature,
+					methodParameters: request.method_parameters,
+					amount: request.value,
+				}
+				const result = await future
+				rootModel.signerDetails = undefined
+				return result
+			},
+			submitContractDeployment: async (...[request]: Parameters<provider.HotOstrichHandler['submitContractDeployment']>) => {
+				const future = new Future<boolean>()
+				rootModel.signerDetails = {
+					kind: 'deploy',
+					action: () => future.resolve(true),
+					cancel: () => future.resolve(false),
+					amount: request.value,
+				}
+				const result = await future
+				rootModel.signerDetails = undefined
+				return result
+			},
+			submitNativeTokenTransfer: async (...[request]: Parameters<provider.HotOstrichHandler['submitNativeTokenTransfer']>) => {
+				const future = new Future<boolean>()
+				rootModel.signerDetails = {
+					kind: 'transfer',
+					action: () => future.resolve(true),
+					cancel: () => future.resolve(false),
+					destination: request.to,
+					amount: request.value,
+				}
+				const result = await future
+				rootModel.signerDetails = undefined
+				return result
+			},
+		})
 		if (hotOstrichChannel === undefined) return
 		hotOstrichChannel.updateWallet(rootModel.wallet)
 	},

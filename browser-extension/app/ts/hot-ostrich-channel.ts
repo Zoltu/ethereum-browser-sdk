@@ -102,6 +102,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 			}
 			case 'eth_estimateGas':
 			case 'eth_call': {
+				if (parameters === undefined) throw new Error(`Parameters required for ${method}.`)
 				return this.wallet === undefined
 					? (await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method as JsonRpcMethod, params: parameters })).result
 					: await this.wallet.legacyJsonrpc(method, parameters)
@@ -109,6 +110,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 			case 'eth_sendTransaction':
 			case 'eth_signTransaction': {
 				if (this.wallet === undefined) throw new JsonRpcError(-32601, `Cannot call ${method} without choosing a wallet.`)
+				if (parameters === undefined) throw new Error(`Parameters required for ${method}.`)
 				else return await this.wallet.legacyJsonrpc(method, parameters)
 			}
 			default: {

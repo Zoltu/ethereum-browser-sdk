@@ -156,6 +156,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 						case 'eth_estimateGas':
 						case 'eth_sendTransaction':
 						case 'eth_signTransaction': {
+							if (parameters === undefined) throw new Error(`Parameters required for ${method}.`)
 							return await this.wallet.legacyJsonrpc(method, parameters)
 						}
 					}
