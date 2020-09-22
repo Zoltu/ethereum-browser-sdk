@@ -135,6 +135,7 @@ function Parameter({errorHandler, description, parameter}: ParameterModel) {
 			}), [parameter])
 			return <code>{description.type}: 0x{addressString}</code>
 		} else if (description.type.startsWith('bytes')) {
+			// TODO: if the first 4 bytes resolves to a valid function selector, try to parse the rest and present it since this is probably a nested wallet
 			const length = Number.parseInt(description.type.substring('bytes'.length))
 			return <code>{description.type}: 0x{Bytes.fromUnsignedInteger(parameter, length * 8)}</code>
 		} else {
