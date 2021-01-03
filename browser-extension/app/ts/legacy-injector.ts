@@ -15,13 +15,5 @@ if (!(window as any).legacyEthereumInjected) {
 	headOrRoot.insertBefore(scriptTag, headOrRoot.children[0])
 	headOrRoot.removeChild(scriptTag)
 
-	const iframes = document.querySelectorAll('iframe')
-	iframes.forEach(iframe => {
-		const iframeHead = iframe.querySelector('head')
-		const injectionTarget = (iframeHead !== null) ? iframeHead : iframe
-		injectionTarget.insertBefore(scriptTag, injectionTarget.children[0])
-		injectionTarget.removeChild(scriptTag)
-	})
-
 	console.log('legacy ethereum provider script has been injected')
 }
