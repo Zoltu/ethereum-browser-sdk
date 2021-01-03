@@ -18,7 +18,7 @@
 		"typescript": "4.0.3"
 	},
 	"scripts": {
-		"clean": "recursive-delete \"output\"",
+		"clean": "recursive-delete \"app/js\" && recursive-delete \"app/vendor\"",
 		"watch": "cd build && npx ts-node watch.ts",
 		"build": "cd build && npx ts-node build.ts",
 		"prepare": "cd build && npm install"
