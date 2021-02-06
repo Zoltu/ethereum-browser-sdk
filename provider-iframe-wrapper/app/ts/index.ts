@@ -54,6 +54,8 @@ const rootModel = createOnChangeProxy<AppModel>(render, {
 					methodSignature: request.method_signature,
 					methodParameters: request.method_parameters,
 					amount: request.value,
+					gasPrice: request.gas_price,
+					gasLimit: request.gas_limit,
 				}
 				const result = await future
 				rootModel.signerDetails = undefined
@@ -66,6 +68,8 @@ const rootModel = createOnChangeProxy<AppModel>(render, {
 					action: () => future.resolve(true),
 					cancel: () => future.resolve(false),
 					amount: request.value,
+					gasPrice: request.gas_price,
+					gasLimit: request.gas_limit,
 				}
 				const result = await future
 				rootModel.signerDetails = undefined
@@ -79,6 +83,8 @@ const rootModel = createOnChangeProxy<AppModel>(render, {
 					cancel: () => future.resolve(false),
 					destination: request.to,
 					amount: request.value,
+					gasPrice: request.gas_price,
+					gasLimit: request.gas_limit,
 				}
 				const result = await future
 				rootModel.signerDetails = undefined

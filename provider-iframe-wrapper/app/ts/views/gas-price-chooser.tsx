@@ -23,7 +23,7 @@ export function GasPriceChooser(model: GasPriceChooserModel) {
 				newPercentiles[i / 5 - 1] = value - value % 10n**7n
 			}
 			setPercentiles(newPercentiles)
-			model.setGasPrice(percentiles[percentile / 5 -1] + 1n)
+			model.setGasPrice(percentiles[percentile / 5 -1])
 		} catch (error) {
 			console.error(error)
 		}
@@ -35,7 +35,7 @@ export function GasPriceChooser(model: GasPriceChooserModel) {
 		if (percentile > 95) return
 		if (percentile % 5) return
 		setPercentile(percentile)
-		model.setGasPrice(percentiles[percentile / 5 - 1] + 1n)
+		model.setGasPrice(percentiles[percentile / 5 - 1])
 	}
 
 	React.useEffect(() => { refreshPercentiles() }, [])

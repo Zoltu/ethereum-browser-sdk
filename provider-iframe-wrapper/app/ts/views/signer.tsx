@@ -27,24 +27,30 @@ export interface SignerModel {
 		readonly methodSignature: string
 		readonly methodParameters: readonly shared.ContractParameter[]
 		readonly amount: bigint
+		readonly gasPrice?: bigint
+		readonly gasLimit?: bigint
 	} | {
 		readonly kind: 'deploy'
 		readonly action: () => void
 		readonly cancel: () => void
 		readonly amount: bigint
+		readonly gasPrice?: bigint
+		readonly gasLimit?: bigint
 	} | {
 		readonly kind: 'transfer'
 		readonly action: () => void
 		readonly cancel: () => void
 		readonly destination: bigint
 		readonly amount: bigint
+		readonly gasPrice?: bigint
+		readonly gasLimit?: bigint
 	}
 }
 export function Signer(model: SignerModel) {
 	switch (model.details.kind) {
-		case 'call': return <ContractCallSigner errorHandler={model.errorHandler} action={model.details.action} cancel={model.details.cancel} contractAddress={model.details.contractAddress} methodSignature={model.details.methodSignature} methodParameters={model.details.methodParameters} amount={model.details.amount} />
-		case 'deploy': return <ContractDeploySigner action={model.details.action} cancel={model.details.cancel} amount={model.details.amount} />
-		case 'transfer': return <NativeTransferSigner errorHandler={model.errorHandler} action={model.details.action} cancel={model.details.cancel} destinationAddress={model.details.destination} amount={model.details.amount} />
+		case 'call': return <ContractCallSigner errorHandler={model.errorHandler} action={model.details.action} cancel={model.details.cancel} contractAddress={model.details.contractAddress} methodSignature={model.details.methodSignature} methodParameters={model.details.methodParameters} amount={model.details.amount} gasPrice={model.details.gasPrice} gasLimit={model.details.gasLimit} />
+		case 'deploy': return <ContractDeploySigner action={model.details.action} cancel={model.details.cancel} amount={model.details.amount} gasPrice={model.details.gasPrice} gasLimit={model.details.gasLimit} />
+		case 'transfer': return <NativeTransferSigner errorHandler={model.errorHandler} action={model.details.action} cancel={model.details.cancel} destinationAddress={model.details.destination} amount={model.details.amount} gasPrice={model.details.gasPrice} gasLimit={model.details.gasLimit} />
 		default: assertNever(model.details)
 	}
 }
@@ -57,6 +63,8 @@ export interface ContractCallSignerModel {
 	readonly methodSignature: string
 	readonly methodParameters: readonly shared.ContractParameter[]
 	readonly amount: bigint
+	readonly gasPrice?: bigint
+	readonly gasLimit?: bigint
 }
 export function ContractCallSigner(model: ContractCallSignerModel) {
 	const [contractAddressString, setContractAddressString] = React.useState<string | undefined>()
@@ -73,6 +81,8 @@ export function ContractCallSigner(model: ContractCallSignerModel) {
 			{model.methodParameters.map((value, index) => <div key={index}><Parameter errorHandler={model.errorHandler} description={parameterDescriptions[index]} parameter={value}/></div>)}
 		</div>
 		<div>Amount: <code>{bigintToDecimalString(model.amount, 18n)}</code></div>
+		<div>Gas Price: {model.gasPrice && <code>{bigintToDecimalString(model.gasPrice, 9n)}</code>}</div>
+		<div>Gas Limit: {model.gasLimit && <code>{model.gasLimit.toString(10)}</code>}</div>
 		<div>
 			<button onClick={model.action}>Approve</button>
 			<button onClick={model.cancel}>Cancel</button>
@@ -84,11 +94,15 @@ export interface ContractDeploySignerModel {
 	readonly action: () => void
 	readonly cancel: () => void
 	readonly amount: bigint
+	readonly gasPrice?: bigint
+	readonly gasLimit?: bigint
 }
 export function ContractDeploySigner(model: ContractDeploySignerModel) {
 	return <div style={sharedStyle}>
 		<div>Contract Deployment</div>
 		<div>Amount: <code>{bigintToDecimalString(model.amount, 18n)}</code></div>
+		<div>Gas Price: {model.gasPrice && <code>{bigintToDecimalString(model.gasPrice, 9n)}</code>}</div>
+		<div>Gas Limit: {model.gasLimit && <code>{model.gasLimit.toString(10)}</code>}</div>
 		<div>
 			<button onClick={model.action}>Approve</button>
 			<button onClick={model.cancel}>Cancel</button>
@@ -102,6 +116,8 @@ export interface NativeTransferSignerModel {
 	readonly cancel: () => void
 	readonly destinationAddress: bigint
 	readonly amount: bigint
+	readonly gasPrice?: bigint
+	readonly gasLimit?: bigint
 }
 export function NativeTransferSigner(model: NativeTransferSignerModel) {
 	const [destinationAddressString, setDestinationAddress] = React.useState<string | undefined>()
@@ -112,6 +128,8 @@ export function NativeTransferSigner(model: NativeTransferSignerModel) {
 	return <div style={sharedStyle}>
 		<div>Destination: <code>{destinationAddressString === undefined ? 'Loading...' : destinationAddressString}</code></div>
 		<div>Amount: <code>{bigintToDecimalString(model.amount, 18n)}</code></div>
+		<div>Gas Price: {model.gasPrice && <code>{bigintToDecimalString(model.gasPrice, 9n)}</code>}</div>
+		<div>Gas Limit: {model.gasLimit && <code>{model.gasLimit.toString(10)}</code>}</div>
 		<div>
 			<button onClick={model.action}>Approve</button>
 			<button onClick={model.cancel}>Cancel</button>
@@ -130,12 +148,9 @@ function Parameter({errorHandler, description, parameter}: ParameterModel) {
 			return <code>{description.type}: {bigintToDecimalString(parameter, 18n)}</code>
 		} else if(description.type === 'address') {
 			const [addressString, setAddressString] = React.useState<string | undefined>()
-			React.useEffect(errorHandler.asyncWrapper(async () => {
-				setAddressString(await ethereum.addressToChecksummedString(parameter))
-			}), [parameter])
+			React.useEffect(errorHandler.asyncWrapper(async () => { setAddressString(await ethereum.addressToChecksummedString(parameter)) }), [parameter])
 			return <code>{description.type}: 0x{addressString}</code>
 		} else if (description.type.startsWith('bytes')) {
-			// TODO: if the first 4 bytes resolves to a valid function selector, try to parse the rest and present it since this is probably a nested wallet
 			const length = Number.parseInt(description.type.substring('bytes'.length))
 			return <code>{description.type}: 0x{Bytes.fromUnsignedInteger(parameter, length * 8)}</code>
 		} else {
