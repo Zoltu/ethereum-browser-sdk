@@ -148,7 +148,7 @@ function Parameter({errorHandler, description, parameter}: ParameterModel) {
 	} else if (Array.isArray(parameter)) {
 		return <div>
 			<div>[</div>
-				{parameter.map((nestedParameter, index) => <div style={{ marginLeft: '10px' }} key={index}><Parameter errorHandler={errorHandler} description={{ name: `${description.name}_${index}`, type: description.type.slice(0, -2) }} parameter={nestedParameter}/></div>)}
+				{parameter.map((nestedParameter, index) => <div style={{ marginLeft: '10px' }} key={index}><Parameter errorHandler={errorHandler} description={{ name: `${description.name}_${index}`, type: description.type.slice(0, -2), components: description.components }} parameter={nestedParameter}/></div>)}
 			<div>]</div>
 		</div>
 	} else if (parameter instanceof Uint8Array) {
