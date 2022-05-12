@@ -17,8 +17,8 @@ export async function getFileType(filePath: string): Promise<'file'|'directory'|
 		if (fileDetails.isDirectory()) return 'directory'
 		else if (fileDetails.isFile()) return 'file'
 		else return 'other'
-	} catch (error) {
-		if (error.code === 'ENOENT') return 'nonexistent'
+	} catch (error: unknown) {
+		if (typeof error === 'object' && error !== null && 'code' in error && (error as {code:unknown}).code === 'ENOENT') return 'nonexistent'
 		throw error
 	}
 }

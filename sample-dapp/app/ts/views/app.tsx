@@ -21,6 +21,7 @@ export interface AppModel {
 	readonly tokens: {
 		readonly symbol: string
 		readonly address: bigint
+		readonly decimals: bigint
 	}[]
 }
 

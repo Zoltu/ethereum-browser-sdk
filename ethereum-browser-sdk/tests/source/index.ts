@@ -1,14 +1,15 @@
 import { JSDOM } from 'jsdom'
-import { client, provider } from '@zoltu/ethereum-browser-sdk'
+import { client, provider, shared } from '@zoltu/ethereum-browser-sdk'
 
 const { providerWindow, clientWindow } = createWindowWithIframe()
 
-const providerAnnouncement = {
+const providerAnnouncement: shared.Handshake.ProviderAnnouncementNotification['payload'] = {
 	friendly_icon: 'iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==',
 	friendly_name: 'My Awesome Provider',
 	provider_id: 'my-provider-id',
-	supported_protocols: [...client.HotOstrichChannel.supportedProtocols]
-}
+	supported_protocols: [...client.HotOstrichChannel.supportedProtocols],
+	chain_name: 'Ethereum Mainnet',
+} as const
 
 const handshakeClient = new client.HandshakeChannel(clientWindow, {
 	onError: console.error,
@@ -29,7 +30,7 @@ setTimeout(() => {
 
 
 function createWindowWithIframe() {
-	const providerWindow = new JSDOM().window
+	const providerWindow = new JSDOM().window as any
 	const iframe = providerWindow.document.createElement('iframe')
 	providerWindow.document.body.appendChild(iframe)
 	const clientWindow = iframe.contentWindow

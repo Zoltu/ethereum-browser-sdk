@@ -7,7 +7,7 @@ export const IFrame = (model: IFrameModel) => {
 	return <iframe
 		id='child-iframe'
 		ref={onChange}
-		sandbox='allow-downloads-without-user-activation allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-presentation allow-scripts allow-same-origin'
+		sandbox='allow-forms allow-modals allow-orientation-lock allow-pointer-lock allow-popups allow-presentation allow-scripts allow-same-origin'
 		src={model.dappAddress || 'about:blank'}
 		style={{display: model.dappAddress === undefined ? 'none' : ''}}
 	/>

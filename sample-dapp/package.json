@@ -3,12 +3,12 @@
 	"repository": {},
 	"license": "Unlicense",
 	"dependencies": {
-		"@types/react": "16.9.5",
-		"@types/react-dom": "16.9.1",
+		"@types/react": "18.0.9",
+		"@types/react-dom": "18.0.3",
 		"@zoltu/ethereum-browser-sdk": "file:../ethereum-browser-sdk/library",
-		"es-module-shims": "0.4.5",
-		"react": "16.10.2",
-		"react-dom": "16.10.2"
+		"es-module-shims": "1.5.4",
+		"react": "18.1.0",
+		"react-dom": "18.1.0"
 	},
 	"scripts": {
 		"watch": "cd build && npx ts-node watch.ts",

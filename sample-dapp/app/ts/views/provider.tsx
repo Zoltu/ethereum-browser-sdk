@@ -22,6 +22,7 @@ interface ProviderModel {
 	readonly tokens: readonly {
 		readonly symbol: string
 		readonly address: bigint
+		readonly decimals: bigint
 	}[]
 }
 

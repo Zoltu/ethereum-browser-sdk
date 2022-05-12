@@ -1,18 +1,22 @@
-export function decimalStringToBigintEth(valueString: string): bigint | undefined {
+export function decimalStringToBigint(valueString: string, power: bigint): bigint | undefined {
 	if (!/^\d+(?:\.\d+)?$/.test(valueString)) return undefined
 	const splitValueString = valueString.split('.')
-	const integerPartString = splitValueString[0] + '000000000000000000'
-	const fractionalPartString = ((splitValueString.length === 2) ? splitValueString[1] : '0').slice(0, 18).padEnd(18, '0')
+	const integerPartString = splitValueString[0] + '0'.repeat(Number(power))
+	const fractionalPartString = ((splitValueString.length === 2) ? splitValueString[1] : '0').slice(0, Number(power)).padEnd(Number(power), '0')
 	return BigInt(integerPartString) + BigInt(fractionalPartString)
 }
 
 export function bigintEthToDecimalString(value: bigint): string {
-	const integerPart = value / 10n**18n
-	const fractionalPart = value % 10n**18n
+	return bigintToDecimalString(value, 18n)
+}
+
+export function bigintToDecimalString(value: bigint, power: bigint): string {
+	const integerPart = value / 10n**power
+	const fractionalPart = value % 10n**power
 	if (fractionalPart === 0n) {
 		return integerPart.toString(10)
 	} else {
-		return `${integerPart.toString(10)}.${fractionalPart.toString(10).padStart(18, '0')}`
+		return `${integerPart.toString(10)}.${fractionalPart.toString(10).padStart(Number(power), '0')}`
 	}
 }
 

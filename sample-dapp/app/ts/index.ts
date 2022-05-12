@@ -24,10 +24,11 @@ const rootModel = createOnChangeProxy<AppModel>(render, {
 		id: ''
 	},
 	tokens: [
-		{ symbol: 'DAI', address: 0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359n },
-		{ symbol: 'MKR', address: 0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2n },
-		{ symbol: 'REP', address: 0x1985365e9f78359a9B6AD760e32412f4a445E862n },
-		{ symbol: 'TOK', address: 0xa15579ce14e99bfb943a76dcc0d818f30cc408adn },
+		{ symbol: 'DAI', address: 0x89d24a6b4ccb1b6faa2625fe562bdd9a23260359n, decimals: 18n },
+		{ symbol: 'MKR', address: 0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2n, decimals: 18n },
+		{ symbol: 'REP', address: 0x1985365e9f78359a9B6AD760e32412f4a445E862n, decimals: 18n },
+		{ symbol: 'USDC', address: 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48n, decimals: 6n },
+		{ symbol: 'TOK', address: 0xa15579ce14e99bfb943a76dcc0d818f30cc408adn, decimals: 18n },
 	],
 })
 // put the model on the window for debugging convenience
@@ -77,7 +78,7 @@ function onProviderSelected(selectedProviderId: string): void {
 		},
 		onWalletAddressChanged: () => {
 			// capture the walletAddress object because we will be executing some async code and we don't want to accidentally use the wrong wallet address if it changes
-			const walletAddress = hotOstrichChannel.walletAddress
+			const walletAddress = hotOstrichChannel.walletAddress === undefined ? undefined : BigInt(hotOstrichChannel.walletAddress)
 			selectedProvider.wallet = walletAddress === undefined
 				? undefined
 				: {

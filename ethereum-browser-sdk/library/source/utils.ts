@@ -23,3 +23,30 @@ export function setsAreEqual<T extends ReadonlySet<any>>(left: T, right: T): boo
 	}
 	return true
 }
+
+export class ErrorWithData extends Error {
+	public constructor(message: string, public readonly data: unknown, public readonly code: number) {
+		super(message)
+		Object.setPrototypeOf(this, ErrorWithData.prototype)
+	}
+}
+
+export function errorExtractor(maybe: unknown): { message: string, data: unknown, code: number } {
+	if (maybe instanceof ErrorWithData) {
+		return maybe
+	}
+	if (maybe instanceof Error) {
+		const message = maybe.message
+		const data = 'data' in maybe ? (maybe as {data:unknown}).data : JSON.stringify(maybe)
+		const code = 'code' in maybe
+			? typeof (maybe as {code:unknown}).code === 'number'
+				? (maybe as {code:number}).code
+				: typeof (maybe as {code:unknown}).code === 'string'
+					? Number.parseInt((maybe as {code:string}).code)
+					: 0
+			: 0
+		return { message, data, code }
+	} else {
+		return { message: 'Unknown error occurred.', data: JSON.stringify(maybe), code: 0 }
+	}
+}

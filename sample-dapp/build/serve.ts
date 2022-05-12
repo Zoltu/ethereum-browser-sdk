@@ -65,9 +65,9 @@ async function listener(request: http.IncomingMessage, response: http.ServerResp
 		response.setHeader('Access-Control-Allow-Headers', '*')
 		response.setHeader('Content-type', isKnownMimetype(extension) ? mimeType[extension] : 'text/plain' )
 		response.end(contents)
-	} catch (error) {
+	} catch (error: unknown) {
 		response.statusCode = 500
-		response.end(`<pre>Internal server error: ${error.code}: ${error.message}\n${error.stack}</pre>`)
+		response.end(`<pre>Internal server error: ${(error as {code:unknown}).code}: ${(error as {message:unknown}).message}\n${(error as {stack:unknown}).stack}</pre>`)
 	}
 }
 

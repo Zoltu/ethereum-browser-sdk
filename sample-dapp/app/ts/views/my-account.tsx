@@ -9,6 +9,7 @@ interface MyAccountModel {
 	readonly tokens: readonly {
 		readonly symbol: string
 		readonly address: bigint
+		readonly decimals: bigint
 	}[]
 }
 
@@ -17,7 +18,7 @@ export const MyAccount = (model: MyAccountModel) => <article>
 	<section>
 		<h3>Address</h3>
 		<span className='monospace'>{model.address.toString(16).padStart(40, '0')}</span>
-		<Token errorHandler={model.errorHandler} symbol='ETH' getTokenBalance={model.getEthBalance}  />
+		<Token errorHandler={model.errorHandler} symbol='ETH' getTokenBalance={model.getEthBalance} decimals={18n} />
 		<Tokens erroHandler={model.errorHandler} getTokenBalance={model.getTokenBalance} tokens={model.tokens} />
 	</section>
 </article>

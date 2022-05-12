@@ -1,5 +1,5 @@
 import { ErrorHandler } from '../library/error-handler'
-import { decimalStringToBigintEth, hexStringToBigint } from '../library/utils'
+import { decimalStringToBigint, hexStringToBigint } from '../library/utils'
 
 interface SendEthModel {
 	readonly errorHandler: ErrorHandler
@@ -21,7 +21,7 @@ export const SendEth = (model: SendEthModel) => {
 		setSending(true)
 		try {
 			// we can only reach this code if `validate` passes, so we know that at this point both of these values will match the expected form
-			const amount = decimalStringToBigintEth(amountString)!
+			const amount = decimalStringToBigint(amountString, 18n)!
 			const destination = hexStringToBigint(destinationString)!
 			await model.onSendEth(amount, destination)
 		} finally {

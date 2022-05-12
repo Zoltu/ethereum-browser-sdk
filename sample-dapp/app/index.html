@@ -8,8 +8,8 @@
 	<!-- turn these into `import 'react'` once https://github.com/babel/babel/issues/10476 is fixed and applied to react -->
 	<script src='./vendor/react/react.development.js'></script>
 	<script src='./vendor/react-dom/react-dom.development.js'></script>
-	<script type='module' src='./vendor/es-module-shims/es-module-shims.js'></script>
-	<script type='importmap-shim'>
+	<script async type='module' src='./vendor/es-module-shims/es-module-shims.js'></script>
+	<script type='importmap'>
 		{
 			"imports": {
 				"@zoltu/ethereum-browser-sdk": "./vendor/@zoltu/ethereum-browser-sdk/index.js"
@@ -19,5 +19,5 @@
 
 	<main>Loading...</main>
 
-	<script type='module-shim' src='./js/index.js'></script>
+	<script type='module' src='./js/index.js'></script>
 </body>

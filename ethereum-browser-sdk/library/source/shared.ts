@@ -16,17 +16,48 @@
  * Array<type>(N) => (T1,T2,...,Tn) for T is any type in this list
  * object => (T1 N1,T2 N2,...,Tn Nn) for T is any type in this list and N is a name
  */
+
+// FIXME: Chromium won't marshal bigints because of https://bugs.chromium.org/p/chromium/issues/detail?id=1045782 so we need to drop bigint everywhere in here and use something like hex strings instead
 export type ContractParameter = Uint8Array | bigint | boolean | string | ContractParameterArray | ContractParameterTuple
 export interface ContractParameterArray extends ReadonlyArray<ContractParameter> { }
 export interface ContractParameterTuple { [key: string]: ContractParameter }
 
-export interface BaseMessage { readonly type: MessageType, readonly kind: MessageKind, readonly payload: MessagePayload }
-export interface BaseBroadcast extends BaseMessage { readonly type: 'broadcast', readonly kind: Extract<Message, {type:'broadcast'}>['kind'] }
-export interface BaseNotification extends BaseMessage { readonly type: 'notification', readonly kind: Extract<Message, {type:'notification'}>['kind'] }
-export interface BaseRequest extends BaseMessage { readonly type: 'request', readonly kind: Extract<Message, {type:'request'}>['kind'], readonly correlation_id: string }
-export interface BaseResponse extends BaseMessage { readonly type: 'response', readonly kind: Extract<Message, {type:'response'}>['kind'], readonly correlation_id: string, readonly success: boolean }
-export interface BaseSuccessResponse extends BaseResponse { readonly success: true }
-export interface BaseFailureResponse extends BaseResponse { readonly success: false, readonly payload: { readonly message: string, readonly data: unknown } }
+export interface BaseMessage {
+	readonly type: MessageType,
+	readonly kind: MessageKind,
+	readonly payload: MessagePayload
+}
+export interface BaseBroadcast extends BaseMessage {
+	readonly type: 'broadcast',
+	readonly kind: Extract<Message, {type:'broadcast'}>['kind']
+}
+export interface BaseNotification extends BaseMessage {
+	readonly type: 'notification',
+	readonly kind: Extract<Message, {type:'notification'}>['kind']
+}
+export interface BaseRequest extends BaseMessage {
+	readonly type: 'request',
+	readonly kind: Extract<Message, {type:'request'}>['kind'],
+	readonly client_id: string,
+	readonly correlation_id: string
+}
+export interface BaseResponse extends BaseMessage {
+	readonly type: 'response',
+	readonly kind: Extract<Message, {type:'response'}>['kind'],
+	readonly client_id: string,
+	readonly correlation_id: string,
+	readonly success: boolean
+}
+export interface BaseSuccessResponse extends BaseResponse {
+	readonly success: true
+}
+export interface BaseFailureResponse extends BaseResponse {
+	readonly success: false,
+	readonly payload: {
+		readonly message: string,
+		readonly data: unknown
+	}
+}
 
 interface BaseEnvelope {
 	readonly kind: MessageEnvelopeKind
@@ -409,7 +440,7 @@ export namespace HotOstrich {
 			readonly type: 'request'
 			readonly payload: {
 				readonly method: string
-				readonly parameters: unknown[]
+				readonly parameters?: unknown[]
 			}
 		}
 		export interface SuccessResponse extends Kind, BaseSuccessResponse {
@@ -436,16 +467,17 @@ export namespace HotOstrich {
 		readonly kind: 'wallet_address_changed'
 		readonly type: 'notification'
 		readonly payload: {
-			readonly address: bigint
+			readonly address: `0x${string}`
 		}
 	}
 
 	export const ALL_CAPABILITIES = ['address','signTransaction','signMessage','call','submit','log_subscription','log_history','legacy'] as const
+	export type Capability = (typeof ALL_CAPABILITIES)[number]
 	export interface CapabilitiesChanged extends BaseNotification {
 		readonly kind: 'capabilities_changed'
 		readonly type: 'notification'
 		readonly payload: {
-			readonly capabilities: ReadonlySet<(typeof ALL_CAPABILITIES)[number]>
+			readonly capabilities: ReadonlyArray<Capability>
 		}
 	}
 

@@ -1,6 +1,6 @@
 import { Handshake, HotOstrich, MessageEnvelope, EthereumEnvelope, ClientMessage, ProviderMessage, Message, BaseRequest, BaseResponse, ProviderResponse } from "./shared";
 import { FutureUnion, Future } from "./future";
-import { assertNever, newCorrelationId } from "./utils";
+import { assertNever, newCorrelationId, uuidv4 } from "./utils";
 
 interface WindowLike {
 	addEventListener(type: 'message', listener: (message: any) => void): void
@@ -42,12 +42,12 @@ abstract class Channel<T extends MessageEnvelope> {
 	}
 
 	protected readonly send = (message: ClientMessage): void => {
-		const ethereumEnvelope: EthereumEnvelope = {
+		const ethereumEnvelope = {
 			ethereum: {
 				channel: this.clientChannelName,
 				kind: this.kind,
 				message: message,
-			} as MessageEnvelope // _we_ know that T will always be _either_ Handshake.Envelope _OR_ HotOstrich.Envelope, but the compiler thinks _BOTH_ is possible, so we have to cast
+			} as const
 		}
 		if (this.window.parent && this.window.parent !== this.window) {
 			this.window.parent.postMessage(ethereumEnvelope, '*')
@@ -73,6 +73,7 @@ export class HandshakeChannel extends Channel<Handshake.Envelope> {
 	public constructor(window: Window, private readonly handshakeHandlers: HandshakeHandlers) {
 		super(window)
 		this.announceClient()
+		this.onError = this.handshakeHandlers.onError
 	}
 
 	public readonly reRequestProviders = (): void => {
@@ -81,7 +82,7 @@ export class HandshakeChannel extends Channel<Handshake.Envelope> {
 
 	public readonly knownProviders: Record<string, Handshake.ProviderAnnouncementNotification['payload']> = {}
 
-	protected readonly onError = this.handshakeHandlers.onError
+	protected readonly onError
 	protected readonly providerChannelName = Handshake.PROVIDER_CHANNEL_NAME
 	protected readonly clientChannelName = Handshake.CLIENT_CHANNEL_NAME
 	protected readonly kind = Handshake.KIND
@@ -125,13 +126,18 @@ export interface HotOstrichHandlers {
 export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 	public static readonly supportedProtocols = [{ name: HotOstrich.KIND, version: HotOstrich.VERSION }] as const
 
-	private _capabilities: HotOstrich.CapabilitiesChanged['payload']['capabilities'] = new Set()
+	private _capabilities: Set<HotOstrich.Capability> = new Set()
 	public get capabilities() { return this._capabilities }
 	private _walletAddress?: HotOstrich.WalletAddressChanged['payload']['address'] = undefined
 	public get walletAddress() { return this._walletAddress }
+	private _clientId: string = uuidv4()
+	public get clientId() { return this._clientId }
 
 	public constructor(window: Window, private readonly providerId: string, private readonly hotOstrichHandlers: HotOstrichHandlers) {
 		super(window)
+		this.onError = this.hotOstrichHandlers.onError
+		this.providerChannelName = `${HotOstrich.PROVIDER_CHANNEL_PREFIX}${this.providerId}`
+		this.clientChannelName = `${HotOstrich.CLIENT_CHANNEL_PREFIX}${this.providerId}`
 		this.setup()
 	}
 
@@ -170,6 +176,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 		const message = {
 			type: 'request' as const,
 			kind: kind,
+			client_id: this.clientId,
 			correlation_id: correlationId,
 			payload: requestPayload,
 		}
@@ -182,9 +189,9 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 		return future.asPromise
 	}
 
-	protected readonly onError = this.hotOstrichHandlers.onError
-	protected readonly providerChannelName = `${HotOstrich.PROVIDER_CHANNEL_PREFIX}${this.providerId}`
-	protected readonly clientChannelName = `${HotOstrich.CLIENT_CHANNEL_PREFIX}${this.providerId}`
+	protected readonly onError
+	protected readonly providerChannelName
+	protected readonly clientChannelName
 	protected readonly kind = HotOstrich.KIND
 
 	protected readonly onProviderMessage = (message: HotOstrich.ProviderMessage): void => {
@@ -198,6 +205,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 	private pendingRequests: Array<PendingRequestUnion<HotOstrich.ClientRequest>> = []
 
 	private readonly onHotOstrichResponse = (response: HotOstrich.ProviderResponse): void => {
+		if (response.client_id !== this.clientId) return
 		const pendingRequest = this.pendingRequests.find(pendingRequest => pendingRequest.correlationId === response.correlation_id)
 		if (pendingRequest === undefined) throw new Error(`Received a response without finding a matching request.  Maybe it already timed out?  ${JSON.stringify(response, (_key, value) => typeof value === 'bigint' ? `0x${value.toString(16)}` : value)}`)
 		// TODO: `response` should be treated as untrusted user input and validate before resolving the promise with it.  If it doesn't match expectations then we should reject with an appropriate error rather than pushing the problem downstream
@@ -223,8 +231,8 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 	}
 
 	private readonly onCapabilitiesChanged = (payload: HotOstrich.CapabilitiesChanged['payload']): void => {
-		const addressDropped = this._capabilities.has('address') && !payload.capabilities.has('address')
-		this._capabilities = payload.capabilities
+		const addressDropped = this._capabilities.has('address') && !payload.capabilities.includes('address')
+		this._capabilities = new Set(payload.capabilities)
 		this.hotOstrichHandlers.onCapabilitiesChanged()
 		if (addressDropped) this.onWalletAddressChanged({address: undefined})
 	}
