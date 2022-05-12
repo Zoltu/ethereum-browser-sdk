@@ -16,6 +16,8 @@
  * Array<type>(N) => (T1,T2,...,Tn) for T is any type in this list
  * object => (T1 N1,T2 N2,...,Tn Nn) for T is any type in this list and N is a name
  */
+
+// FIXME: Chromium won't marshal bigints because of https://bugs.chromium.org/p/chromium/issues/detail?id=1045782 so we need to drop bigint everywhere in here and use something like hex strings instead
 export type ContractParameter = Uint8Array | bigint | boolean | string | ContractParameterArray | ContractParameterTuple
 export interface ContractParameterArray extends ReadonlyArray<ContractParameter> { }
 export interface ContractParameterTuple { [key: string]: ContractParameter }
@@ -465,7 +467,7 @@ export namespace HotOstrich {
 		readonly kind: 'wallet_address_changed'
 		readonly type: 'notification'
 		readonly payload: {
-			readonly address: bigint
+			readonly address: `0x${string}`
 		}
 	}
 

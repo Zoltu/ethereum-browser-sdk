@@ -78,7 +78,7 @@ function onProviderSelected(selectedProviderId: string): void {
 		},
 		onWalletAddressChanged: () => {
 			// capture the walletAddress object because we will be executing some async code and we don't want to accidentally use the wrong wallet address if it changes
-			const walletAddress = hotOstrichChannel.walletAddress
+			const walletAddress = hotOstrichChannel.walletAddress === undefined ? undefined : BigInt(hotOstrichChannel.walletAddress)
 			selectedProvider.wallet = walletAddress === undefined
 				? undefined
 				: {

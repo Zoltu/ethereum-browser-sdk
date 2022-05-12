@@ -103,4 +103,4 @@ const rootModel = createOnChangeProxy<AppModel>(render, {
 
 ;(window as any).rootModel = rootModel
 const main = document.querySelector('main')
-ReactDOM.render(React.createElement(App, { walletAddress: rootModel.wallet === undefined ? undefined : rootModel.wallet.address, ...rootModel}), main)
+ReactDOM.render(React.createElement(App, rootModel), main)

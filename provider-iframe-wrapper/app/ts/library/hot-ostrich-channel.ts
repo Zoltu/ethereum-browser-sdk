@@ -20,6 +20,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 		// CONSIDER: this is a bit sketchy, if the channel constructor makes any calls to the the handler during construction they will fail because we aren't done constructing `this` yet
 		this.hotOstrichChannel = new provider.HotOstrichChannel(thisWindow, childWindow, 'my-iframe-provider', this)
 		this.hotOstrichChannel.updateCapabilities({ call: true, submit: true, legacy: true })
+		this.jsonRpc = new FetchJsonRpc(this.jsonRpcEndpoint, this.fetch, { gasPriceInAttoethProvider: this.getGasPrice })
 	}
 
 	public readonly shutdown = () => this.hotOstrichChannel.shutdown()
@@ -27,7 +28,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 	private wallet?: Wallet = undefined
 	public readonly updateWallet = (wallet: Wallet | undefined) => {
 		this.wallet = wallet
-		this.hotOstrichChannel.walletAddress = (this.wallet === undefined) ? undefined : this.wallet.address
+		this.hotOstrichChannel.walletAddress = (this.wallet === undefined) ? undefined : `0x${this.wallet.address.toString(16)}`
 		const hasAddress = this.wallet && 'address' in this.wallet
 		const canSignMessage = this.wallet && 'signMessage' in this.wallet
 		const canSignTransaction = this.wallet && 'submitContractCall' in this.wallet
@@ -35,7 +36,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 	}
 
 	// for submitting transactions/queries only (e.g., getBalance), for anything that requires an account or signing, go through the wallet
-	private jsonRpc: JsonRpc = new FetchJsonRpc(this.jsonRpcEndpoint, this.fetch, { gasPriceInAttoethProvider: this.getGasPrice })
+	private jsonRpc: JsonRpc
 
 	public readonly onError: provider.HotOstrichHandler['onError'] = error => {
 		this.errorHandler.noticeError(error)
@@ -123,7 +124,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 			case 'eth_syncing':
 			case 'eth_uninstallFilter':
 			case 'net_version': {
-				const response = await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method as JsonRpcMethod, params: parameters })
+				const response = await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method as JsonRpcMethod, params: parameters ?? [] })
 				return response.result
 			}
 			default: {
@@ -135,7 +136,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 
 						case 'eth_estimateGas':
 						case 'eth_call': {
-							const response = await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method, params: parameters })
+							const response = await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method, params: parameters ?? [] })
 							return response.result
 						}
 

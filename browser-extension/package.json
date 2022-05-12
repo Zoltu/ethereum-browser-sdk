@@ -4,18 +4,18 @@
 	"license": "Unlicense",
 	"dependencies": {
 		"@zoltu/ethereum-browser-sdk": "file:../ethereum-browser-sdk/library",
-		"@zoltu/ethereum-abi-encoder": "5.0.2",
-		"@zoltu/ethereum-crypto": "2.1.3",
-		"@zoltu/ethereum-fetch-json-rpc": "13.0.1",
-		"@zoltu/ethereum-types": "9.0.0",
+		"@zoltu/ethereum-abi-encoder": "5.0.4",
+		"@zoltu/ethereum-crypto": "2.2.2",
+		"@zoltu/ethereum-fetch-json-rpc": "13.1.4",
+		"@zoltu/ethereum-types": "9.0.4",
 		"@zoltu/ethereum-ledger": "3.0.1",
 		"es-module-shims": "0.6.0",
-		"webextension-polyfill": "0.6.0"
+		"webextension-polyfill": "0.9.0"
 	},
 	"devDependencies": {
-		"@types/firefox-webext-browser": "78.0.1",
+		"@types/firefox-webext-browser": "94.0.1",
 		"recursive-fs": "2.1.0",
-		"typescript": "4.0.3"
+		"typescript": "4.6.4"
 	},
 	"scripts": {
 		"clean": "recursive-delete \"app/js\" && recursive-delete \"app/vendor\"",

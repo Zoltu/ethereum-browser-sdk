@@ -15,7 +15,7 @@ new client.HandshakeChannel(window, {
 			onCapabilitiesChanged: () => {},
 			onWalletAddressChanged: () => {
 				for (const callback of accountChangedSubscribers) {
-					callback(hotOstrich.walletAddress === undefined ? [] : [`0x${hotOstrich.walletAddress.toString(16).padStart(40, '0')}`])
+					callback(hotOstrich.walletAddress === undefined ? [] : [hotOstrich.walletAddress])
 				}
 			},
 		})
@@ -27,7 +27,7 @@ const enable = async () => {
 	const provider = getRandomLegacyProvider()
 	if (provider === undefined) return []
 	if (provider.hotOstrich.walletAddress === undefined) return []
-	return [`0x${provider.hotOstrich.walletAddress.toString(16)}`]
+	return [provider.hotOstrich.walletAddress]
 }
 
 const request = async (options: { readonly method: string, readonly params?: unknown[] }) => {

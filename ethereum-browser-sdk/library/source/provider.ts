@@ -1,6 +1,6 @@
 import { MessageEnvelope, Message, ClientMessage, EthereumEnvelope, ProviderMessage, Handshake, HotOstrich, BaseFailureResponse } from "./shared"
 import { EthereumMessageEvent } from "./client"
-import { assertNever } from "./utils"
+import { assertNever, errorExtractor } from "./utils"
 
 interface IncomingWindowLike {
 	addEventListener(type: 'message', listener: (message: any) => void): void
@@ -70,6 +70,7 @@ export class HandshakeChannel extends Channel<Handshake.Envelope> {
 	public constructor(incomingWindow: IncomingWindowLike, outgoingWindow: OutgoingWindowLike, private readonly handshakeHandler: HandshakeHandler) {
 		super(incomingWindow, outgoingWindow)
 		this.announceProvider()
+		this.onError = this.handshakeHandler.onError
 	}
 
 	protected readonly onClientMessage = async (message: Handshake.ClientMessage): Promise<void> => {
@@ -79,7 +80,7 @@ export class HandshakeChannel extends Channel<Handshake.Envelope> {
 			default: return assertNever(message.type)
 		}
 	}
-	protected readonly onError = this.handshakeHandler.onError
+	protected readonly onError
 	protected readonly providerChannelName = Handshake.PROVIDER_CHANNEL_NAME
 	protected readonly clientChannelName = Handshake.CLIENT_CHANNEL_NAME
 	protected readonly kind = Handshake.KIND
@@ -119,7 +120,7 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 
 	private _walletAddress?: HotOstrich.WalletAddressChanged['payload']['address'] = undefined
 	public get walletAddress(): HotOstrich.WalletAddressChanged['payload']['address'] | undefined { return this._walletAddress }
-	public set walletAddress(newWalletAddress: bigint | undefined) {
+	public set walletAddress(newWalletAddress: `0x${string}` | undefined) {
 		if (newWalletAddress === this._walletAddress) return
 		this._walletAddress = newWalletAddress
 		this.updateCapabilities({'address': this._walletAddress !== undefined})
@@ -163,6 +164,9 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 
 	public constructor(incomingWindow: IncomingWindowLike, outgoingWindow: OutgoingWindowLike, private readonly providerId: string, private readonly hotOstrichHandler: HotOstrichHandler) {
 		super(incomingWindow, outgoingWindow)
+		this.onError = this.hotOstrichHandler.onError
+		this.providerChannelName = `${HotOstrich.PROVIDER_CHANNEL_PREFIX}${this.providerId}`
+		this.clientChannelName = `${HotOstrich.CLIENT_CHANNEL_PREFIX}${this.providerId}`
 	}
 
 	protected readonly onClientMessage = async (message: HotOstrich.ClientMessage): Promise<void> => {
@@ -173,9 +177,9 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 		}
 	}
 
-	protected readonly onError = this.hotOstrichHandler.onError
-	protected readonly providerChannelName = `${HotOstrich.PROVIDER_CHANNEL_PREFIX}${this.providerId}`
-	protected readonly clientChannelName = `${HotOstrich.CLIENT_CHANNEL_PREFIX}${this.providerId}`
+	protected readonly onError
+	protected readonly providerChannelName
+	protected readonly clientChannelName
 	protected readonly kind = HotOstrich.KIND
 
 	private readonly onRequest = async (message: HotOstrich.ClientRequest): Promise<void> => {
@@ -199,18 +203,14 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 				payload: payload,
 			// cast is unfortunately necessary since even though we know that message.kind and payload will align (due to ternary above, the compiler doesn't track type dependencies)
 			} as Extract<HotOstrich.ProviderResponse, {payload:typeof payload}>)
-		} catch (error) {
+		} catch (error: unknown) {
 			const errorMessage = {
 				type: 'response',
 				kind: message.kind,
 				client_id: message.client_id,
 				correlation_id: message.correlation_id,
 				success: false,
-				payload: {
-					message: (typeof error === 'object' && 'message' in error) ? error.message : 'Unknown error occurred while processing request.',
-					data: (typeof error === 'object' && 'data' in error) ? error.data : JSON.stringify(error),
-					code: (typeof error === 'object' && 'code' in error) ? error.code : undefined,
-				},
+				payload: errorExtractor(error),
 			} as Extract<HotOstrich.ProviderResponse, BaseFailureResponse>
 			this.send(errorMessage)
 		}

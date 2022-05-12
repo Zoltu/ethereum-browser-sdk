@@ -81,8 +81,8 @@ export function ContractCallSigner(model: ContractCallSignerModel) {
 			{model.methodParameters.map((value, index) => <div key={index}><Parameter errorHandler={model.errorHandler} description={parameterDescriptions[index]} parameter={value}/></div>)}
 		</div>
 		<div>Amount: <code>{bigintToDecimalString(model.amount, 18n)}</code></div>
-		<div>Gas Price: {model.gasPrice && <code>{bigintToDecimalString(model.gasPrice, 9n)}</code>}</div>
-		<div>Gas Limit: {model.gasLimit && <code>{model.gasLimit.toString(10)}</code>}</div>
+		<div><>Gas Price: {model.gasPrice && <code>{bigintToDecimalString(model.gasPrice, 9n)}</code>}</></div>
+		<div><>Gas Limit: {model.gasLimit && <code>{model.gasLimit.toString(10)}</code>}</></div>
 		<div>
 			<button onClick={model.action}>Approve</button>
 			<button onClick={model.cancel}>Cancel</button>
@@ -101,8 +101,8 @@ export function ContractDeploySigner(model: ContractDeploySignerModel) {
 	return <div style={sharedStyle}>
 		<div>Contract Deployment</div>
 		<div>Amount: <code>{bigintToDecimalString(model.amount, 18n)}</code></div>
-		<div>Gas Price: {model.gasPrice && <code>{bigintToDecimalString(model.gasPrice, 9n)}</code>}</div>
-		<div>Gas Limit: {model.gasLimit && <code>{model.gasLimit.toString(10)}</code>}</div>
+		<div><>Gas Price: {model.gasPrice && <code>{bigintToDecimalString(model.gasPrice, 9n)}</code>}</></div>
+		<div><>Gas Limit: {model.gasLimit && <code>{model.gasLimit.toString(10)}</code>}</></div>
 		<div>
 			<button onClick={model.action}>Approve</button>
 			<button onClick={model.cancel}>Cancel</button>
@@ -128,8 +128,8 @@ export function NativeTransferSigner(model: NativeTransferSignerModel) {
 	return <div style={sharedStyle}>
 		<div>Destination: <code>{destinationAddressString === undefined ? 'Loading...' : destinationAddressString}</code></div>
 		<div>Amount: <code>{bigintToDecimalString(model.amount, 18n)}</code></div>
-		<div>Gas Price: {model.gasPrice && <code>{bigintToDecimalString(model.gasPrice, 9n)}</code>}</div>
-		<div>Gas Limit: {model.gasLimit && <code>{model.gasLimit.toString(10)}</code>}</div>
+		<div><>Gas Price: {model.gasPrice && <code>{bigintToDecimalString(model.gasPrice, 9n)}</code>}</></div>
+		<div><>Gas Limit: {model.gasLimit && <code>{model.gasLimit.toString(10)}</code>}</></div>
 		<div>
 			<button onClick={model.action}>Approve</button>
 			<button onClick={model.cancel}>Cancel</button>

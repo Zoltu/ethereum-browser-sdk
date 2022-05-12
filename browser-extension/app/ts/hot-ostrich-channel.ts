@@ -20,6 +20,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 		// CONSIDER: this is a bit sketchy, if the channel constructor makes any calls to the the handler during construction they will fail because we aren't done constructing `this` yet
 		this.hotOstrichChannel = new provider.HotOstrichChannel(thisWindow, childWindow, 'my-extension-provider', this)
 		this.hotOstrichChannel.updateCapabilities({ 'call': true, 'submit': true })
+		this.jsonRpc = new FetchJsonRpc(this.jsonRpcEndpoint, this.fetch, { gasPriceInAttoethProvider: this.getGasPrice })
 	}
 
 	public readonly shutdown = () => this.hotOstrichChannel.shutdown()
@@ -27,7 +28,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 	private wallet?: Wallet = undefined
 	public readonly updateWallet = (wallet: Wallet | undefined) => {
 		this.wallet = wallet
-		this.hotOstrichChannel.walletAddress = (this.wallet === undefined) ? undefined : this.wallet.address
+		this.hotOstrichChannel.walletAddress = (this.wallet === undefined) ? undefined : `0x${this.wallet.address.toString(16)}`
 		const canSignMessage = this.wallet && 'signMessage' in this.wallet
 		const canSignTransaction = this.wallet && 'submitContractCall' in this.wallet
 		const supportsLegacy = this.wallet && 'legacyJsonrpc' in this.wallet
@@ -35,7 +36,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 	}
 
 	// for submitting transactions/queries only (e.g., getBalance), for anything that requires an account or signing, go through the wallet
-	private jsonRpc: JsonRpc = new FetchJsonRpc(this.jsonRpcEndpoint, this.fetch, { gasPriceInAttoethProvider: this.getGasPrice })
+	private jsonRpc: JsonRpc
 
 	public readonly onError: provider.HotOstrichHandler['onError'] = error => {
 		this.errorHandler.noticeError(error)
@@ -114,7 +115,7 @@ export class HotOstrichChannel implements provider.HotOstrichHandler {
 				else return await this.wallet.legacyJsonrpc(method, parameters)
 			}
 			default: {
-				return (await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method as JsonRpcMethod, params: parameters })).result
+				return (await this.jsonRpc.remoteProcedureCall({ id: 1, jsonrpc: '2.0', method: method as JsonRpcMethod, params: parameters ?? [] })).result
 			}
 		}
 	}

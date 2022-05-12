@@ -73,6 +73,7 @@ export class HandshakeChannel extends Channel<Handshake.Envelope> {
 	public constructor(window: Window, private readonly handshakeHandlers: HandshakeHandlers) {
 		super(window)
 		this.announceClient()
+		this.onError = this.handshakeHandlers.onError
 	}
 
 	public readonly reRequestProviders = (): void => {
@@ -81,7 +82,7 @@ export class HandshakeChannel extends Channel<Handshake.Envelope> {
 
 	public readonly knownProviders: Record<string, Handshake.ProviderAnnouncementNotification['payload']> = {}
 
-	protected readonly onError = this.handshakeHandlers.onError
+	protected readonly onError
 	protected readonly providerChannelName = Handshake.PROVIDER_CHANNEL_NAME
 	protected readonly clientChannelName = Handshake.CLIENT_CHANNEL_NAME
 	protected readonly kind = Handshake.KIND
@@ -134,6 +135,9 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 
 	public constructor(window: Window, private readonly providerId: string, private readonly hotOstrichHandlers: HotOstrichHandlers) {
 		super(window)
+		this.onError = this.hotOstrichHandlers.onError
+		this.providerChannelName = `${HotOstrich.PROVIDER_CHANNEL_PREFIX}${this.providerId}`
+		this.clientChannelName = `${HotOstrich.CLIENT_CHANNEL_PREFIX}${this.providerId}`
 		this.setup()
 	}
 
@@ -185,9 +189,9 @@ export class HotOstrichChannel extends Channel<HotOstrich.Envelope> {
 		return future.asPromise
 	}
 
-	protected readonly onError = this.hotOstrichHandlers.onError
-	protected readonly providerChannelName = `${HotOstrich.PROVIDER_CHANNEL_PREFIX}${this.providerId}`
-	protected readonly clientChannelName = `${HotOstrich.CLIENT_CHANNEL_PREFIX}${this.providerId}`
+	protected readonly onError
+	protected readonly providerChannelName
+	protected readonly clientChannelName
 	protected readonly kind = HotOstrich.KIND
 
 	protected readonly onProviderMessage = (message: HotOstrich.ProviderMessage): void => {

@@ -132,8 +132,8 @@ export class MnemonicWallet {
 		switch (method) {
 			case 'eth_estimateGas': {
 				const result = await this.jsonRpc.estimateGas({
-					from: BigInt(transaction.from || await this.jsonRpc.coinbase()),
-					to: BigInt(transaction.to),
+					from: BigInt(transaction.from || await this.jsonRpc.coinbase() || 0n),
+					to: (transaction.to !== null && transaction.to !== undefined) ? BigInt(transaction.to) : null,
 					value: BigInt(transaction.value || 0n),
 					data: Bytes.fromHexString(transaction.data || ''),
 					gasLimit: BigInt(transaction.gas || 1_000_000_000n),
@@ -143,7 +143,7 @@ export class MnemonicWallet {
 			}
 			case 'eth_call': {
 				const result = await this.jsonRpc.offChainContractCall({
-					to: BigInt(transaction.to),
+					to: (transaction.to !== null && transaction.to !== undefined) ? BigInt(transaction.to) : null,
 					data: Bytes.fromHexString(transaction.data || ''),
 					...(transaction.from === undefined ? {} : {from: BigInt(transaction.from)}),
 					...(transaction.value === undefined ? {} : {value: BigInt(transaction.value)}),
@@ -164,9 +164,9 @@ export class MnemonicWallet {
 				return `0x${result.hash.toString(16).padStart(64, '0')}`
 			}
 			case 'eth_signTransaction': {
-				const gasEstimatingTransaction: IOffChainTransaction = {
+				const gasEstimatingTransaction: Required<IOffChainTransaction> = {
 					from: BigInt(transaction.from || await this.jsonRpc.coinbase() || 0n),
-					to: (transaction.to !== null) ? BigInt(transaction.to) : null,
+					to: (transaction.to !== null && transaction.to !== undefined) ? BigInt(transaction.to) : null,
 					value: BigInt(transaction.value || 0n),
 					data: Bytes.fromHexString(transaction.data || ''),
 					gasLimit: BigInt(transaction.gas || 1_000_000_000n),
@@ -275,8 +275,8 @@ export class LedgerWallet {
 		switch (method) {
 			case 'eth_estimateGas': {
 				const result = await this.jsonRpc.estimateGas({
-					from: BigInt(transaction.from || await this.jsonRpc.coinbase()),
-					to: BigInt(transaction.to),
+					from: BigInt(transaction.from || await this.jsonRpc.coinbase() || 0n),
+					to: (transaction.to !== null && transaction.to !== undefined) ? BigInt(transaction.to) : null,
 					value: BigInt(transaction.value || 0n),
 					data: Bytes.fromHexString(transaction.data || ''),
 					gasLimit: BigInt(transaction.gas || 1_000_000_000n),
@@ -286,7 +286,7 @@ export class LedgerWallet {
 			}
 			case 'eth_call': {
 				const result = await this.jsonRpc.offChainContractCall({
-					to: BigInt(transaction.to),
+					to: (transaction.to !== null && transaction.to !== undefined) ? BigInt(transaction.to) : null,
 					data: Bytes.fromHexString(transaction.data || ''),
 					...(transaction.from === undefined ? {} : {from: BigInt(transaction.from)}),
 					...(transaction.value === undefined ? {} : {value: BigInt(transaction.value)}),
@@ -307,9 +307,9 @@ export class LedgerWallet {
 				return `0x${result.hash.toString(16).padStart(64, '0')}`
 			}
 			case 'eth_signTransaction': {
-				const gasEstimatingTransaction: IOffChainTransaction = {
+				const gasEstimatingTransaction: Required<IOffChainTransaction> = {
 					from: BigInt(transaction.from || await this.jsonRpc.coinbase() || 0n),
-					to: (transaction.to !== null) ? BigInt(transaction.to) : null,
+					to: (transaction.to !== null && transaction.to !== undefined) ? BigInt(transaction.to) : null,
 					value: BigInt(transaction.value || 0n),
 					data: Bytes.fromHexString(transaction.data || ''),
 					gasLimit: BigInt(transaction.gas || 1_000_000_000n),
@@ -527,10 +527,12 @@ export class PromptingWallet {
 			submitContractDeployment?: (...parameters: Parameters<provider.HotOstrichHandler['submitContractDeployment']>) => Promise<boolean>
 			submitNativeTokenTransfer?: (...parameters: Parameters<provider.HotOstrichHandler['submitNativeTokenTransfer']>) => Promise<boolean>
 		},
-	) { }
+	) {
+		this.localContractCall = this.underlyingWallet.localContractCall
+	}
 
 	public get address(): bigint { return this.underlyingWallet.address }
-	public readonly localContractCall: provider.HotOstrichHandler['localContractCall'] = this.underlyingWallet.localContractCall
+	public readonly localContractCall: provider.HotOstrichHandler['localContractCall']
 	public readonly submitContractCall: provider.HotOstrichHandler['submitContractCall'] = async request => {
 		if (this.prompts.submitContractCall) {
 			if (!await this.prompts.submitContractCall(request)) throw new Error(`User rejected.`)
@@ -614,7 +616,7 @@ export class PromptingWallet {
 			if (isNativeTransfer(transaction) && this.prompts.submitNativeTokenTransfer) {
 				const userApproved = await this.prompts.submitNativeTokenTransfer({
 					to: BigInt(transaction.to),
-					value: BigInt(transaction || 0n),
+					value: BigInt(transaction.value || 0n),
 					gas_limit: transaction.gas ? BigInt(transaction.gas) : undefined,
 				})
 				if (!userApproved) throw new Error(`User rejected.`)
