@@ -5,8 +5,8 @@
 	</head>
 	<body>
 		<script src='./vendor/webextension-polyfill/browser-polyfill.js'></script>
-		<script type='module' src='./vendor/es-module-shims/es-module-shims.js'></script>
-		<script type='importmap-shim'>
+		<script async type='module' src='./vendor/es-module-shims/es-module-shims.wasm.js'></script>
+		<script type='importmap'>
 			{
 				"imports": {
 					"webextension-polyfill": "./vendor/webextension-polyfill/browser-polyfill.js",
@@ -19,6 +19,6 @@
 				}
 			}
 		</script>
-		<script type='module-shim' src='./js/background.js'></script>
+		<script type='module' src='./js/background.js'></script>
 	</body>
 </html>

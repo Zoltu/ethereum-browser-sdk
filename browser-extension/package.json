@@ -9,7 +9,7 @@
 		"@zoltu/ethereum-fetch-json-rpc": "13.1.4",
 		"@zoltu/ethereum-types": "9.0.4",
 		"@zoltu/ethereum-ledger": "3.0.1",
-		"es-module-shims": "0.6.0",
+		"es-module-shims": "1.5.5",
 		"webextension-polyfill": "0.9.0"
 	},
 	"devDependencies": {
